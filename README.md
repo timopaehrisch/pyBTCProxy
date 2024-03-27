@@ -2,7 +2,7 @@
 pyBTCProxy is a proxy application which allow Core Lightning (CLN, and possibly lnd, eclair or other Lightning implementations) with a pruned Bitcoin node.
 
 ## lnd and eclair users please read this!
-Please note that my motivation to write this script was to run my Core Lightning (CLN) node with a pruned Bitcoin node, so 99% of development and testing was done with CLN. I did a quick test run with an lnd instance, which started up, connected and synced the network graph via pyBTCProxy just like normal, but I did not check how lnd reacts if it tries to retrieve a block that was pruned (timeouts, retries etc.). I could need some help here, so please share your experience, if you run pyBTCProxy with lnd, eclair or anything else. Also, I didn't test pyBTCProxy with other bitcoin implementations like btcd.
+Please note that my motivation to write this script was to run my Core Lightning (CLN) node with a pruned Bitcoin node, so 99% of development and testing was done with CLN. I did a quick test run with an lnd instance, which started up, connected and synced the network graph via pyBTCProxy just like normal, but I did not check how lnd reacts when it tries to retrieve a block that has been pruned (timeouts, retries etc.). I could need some help here, so please share your experience, if you run pyBTCProxy with lnd, eclair or anything else. I only tested pyBTCProxy with the Bitcoin Core implementation of bitcoind. 
 
 
 ## What and Why?

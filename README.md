@@ -28,6 +28,7 @@ You can either download the pyBTCProxy.py script manually and create the configu
 git clone https://github.com/martinneustein/pyBTCProxy
 cd pyBTCProxy
 cp proxy-sample.conf proxy.conf
+pip3 install aiohttp configparser
 ```
 
 When started, pyBTCProxy looks for a proxy.conf file in its current directory. It is mandatory to set dest_user and dest_pass in this config file, which are the credentials for bitcoind (can be found in bitcoin.conf of your bitcoind installation). All other configuration values are optional and will result in a pyBTCProxy listening on 127.0.0.1 port 8331 and connecting to bitcoind on 127.0.0.1 port 8332 (bitcoind's default values).

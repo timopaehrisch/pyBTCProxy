@@ -28,7 +28,7 @@ You can either download the pyBTCProxy.py script manually and create the configu
 git clone https://github.com/martinneustein/pyBTCProxy
 cd pyBTCProxy
 cp proxy-sample.conf proxy.conf
-pip3 install aiohttp configparser
+pip3 install aiohttp configparser (TODO: Check if sufficient)
 ```
 
 When started, pyBTCProxy looks for a proxy.conf file in its current directory. It is mandatory to set dest_user and dest_pass in this config file, which are the credentials for bitcoind (can be found in bitcoin.conf of your bitcoind installation). All other configuration values are optional and will result in a pyBTCProxy listening on 127.0.0.1 port 8331 and connecting to bitcoind on 127.0.0.1 port 8332 (bitcoind's default values).
@@ -37,7 +37,7 @@ When started, pyBTCProxy looks for a proxy.conf file in its current directory. I
 Your lightning node needs to be configured to connect to pyBTCProxy instead of bitcoind.
 
 ### lightningd
-CLN config (~/.lightning/config):
+CLN config (usually in ~/.lightning/config):
 
 ```
 # pyBTCProxy
@@ -48,7 +48,7 @@ bitcoin-rpcpassword=<DOES_NOT_MATTER>
 ```
 
 ### lnd
-lnd config (lnd.conf)
+lnd config (usually in ~/.lnd/lnd.conf)
 
 ```
 bitcoind.rpchost=127.0.0.1:8331
@@ -56,7 +56,58 @@ bitcoind.rpcuser=<DOES_NOT_MATTER>
 bitcoind.rpcpass=<DOES_NOT_MATTER>
 ```
 
-rpcuser and rpcpass[word] can be set to any value, as pyBTCProxy does no authenticate incoming requests and will ignore them.
+rpcuser and rpcpass[word] can be set to any value, as pyBTCProxy does no authenticate incoming requests.
 
 
+### Running
 
+You can start pyBTCProxy by running
+
+```
+python3 pyBTCProxy.py
+```
+
+### systemd script
+
+If you want to start pyRPCProxy during system startup, create ```/etc/systemd/system/pybtcproxy.service``` with the following content:
+
+```
+[Unit]
+Description=pyBTCProxy Bitcoin RPC Proxy
+After=bitcoind.service
+
+[Service]
+WorkingDirectory=/path/to/pyBTCProxy
+ExecStart=python3 /path/to/pyBTCProxy
+
+User=bitcoin
+Group=bitcoin
+Type=simple
+
+[Install]
+WantedBy=multi-user.target
+```
+
+and initialize during startup (Ubuntu):
+
+```
+systemctl daemon-reload
+systemctl enable pybtcproxy.service
+```
+
+Log output will go to syslog:
+
+```
+journalctl -f -u pybtcproxy -n 20
+```
+
+Depending on the log_level configuration value pyBTCProxy will be either pretty noisy on 'debug' or very quiet on 'info'.
+
+A typical log output for a successful proxy operation/block download initiation would look like this (log_level = info):
+
+```
+Mar 24 00:07:13 localhost python3[935646]: INFO:RpcProxy:🐙 Block 0000000000000000000228aea9b002ee968f2a7e560a448530c33488d8f50b3d Download initiated from peer 596 / lnw64dqngd....ru72vtyd.onion:8333
+Mar 24 00:07:14 localhost python3[935646]: INFO:RpcProxy:🎯 Block 0000000000000000000228aea9b002ee968f2a7e560a448530c33488d8f50b3d Download initiated from peer 339 / 24.x.y.3:8333
+```
+
+Here, lightningd tries to retrieve a block three times: The first two tries fail and pyBTCProxy initiates a block download from a random peer bitcoind is connected to. The third try does not produce any log output, as the block has been downloaded in the meantime and was successfully returned to lightningd.

@@ -55,7 +55,7 @@ bitcoind.rpcuser=<DOES_NOT_MATTER>
 bitcoind.rpcpass=<DOES_NOT_MATTER>
 ```
 
-rpcuser and rpcpass[word] can be set to any value, as pyBTCProxy does no authenticate incoming requests will ignore them.
+rpcuser and rpcpass[word] can be set to any value, as pyBTCProxy does no authenticate incoming requests and will ignore them.
 
 
 

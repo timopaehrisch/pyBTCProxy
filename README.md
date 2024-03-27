@@ -103,13 +103,19 @@ Log output will go to syslog:
 journalctl -f -u pybtcproxy -n 20
 ```
 
-The verbosity of pyBTCProxy depends on the log_level configuration value. Setting it to 'debug' will result in extensive logging, while setting it to 'info' will keep the logging minimal.
+The verbosity of pyBTCProxy depends on the log_level configuration value. Setting it to 'debug' will result in extensive logging, while setting it to 'info' will keep the logging to a minimal.
 
 A typical log output for a successful proxy operation and block download initiation would resemble the following:
 
 ```
-Mar 24 00:07:13 localhost python3[935646]: INFO:RpcProxy:🐙 Block 0000000000000000000228aea9b002ee968f2a7e560a448530c33488d8f50b3d Download initiated from peer 596 / lnw64dqngd....ru72vtyd.onion:8333
-Mar 24 00:07:14 localhost python3[935646]: INFO:RpcProxy:🎯 Block 0000000000000000000228aea9b002ee968f2a7e560a448530c33488d8f50b3d Download initiated from peer 339 / 24.x.y.3:8333
+pyBTCProxy 😘 Block 00000000000000000009336cf45c84081bfc46c30eab21f4dbb9b6c136da7ff4 download initiated from peer id 79 / [2a02:12...:feae:152d]:8333
+ pyBTCProxy 🚚 Block 00000000000000000009336cf45c84081bfc46c30eab21f4dbb9b6c136da7ff4 download initiated from peer id 923 / 185.....33:8333
 ```
 
 In this scenario, lightningd attempts to retrieve a block three times: The initial two attempts fail, prompting pyBTCProxy to initiate a block download from a random peer connected to bitcoind. During the third attempt, no log output is generated, indicating that the block has been successfully downloaded in the interim and returned to lightningd.
+
+Every 100 requests handled/forwarded, pyBTCProxy prints out some heartbeat information:
+
+```
+pyBTCProxy handled 200 requests
+```

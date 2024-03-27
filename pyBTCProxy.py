@@ -137,9 +137,6 @@ class pyBTCProxy:
         configuration.read('proxy.conf')
 
         # Section [net]
-        if not isinstance(configuration['net'], dict):
-            print("proxy.conf does not contain [net] section")
-            exit
         if not isinstance(configuration['net']['listen_ip'], str):
             configuration['net']['listen_ip'] = '127.0.0.1'
         if not isinstance(configuration['net']['listen_port'], str):
@@ -156,9 +153,6 @@ class pyBTCProxy:
             exit
 
         # Section [app]
-        if not isinstance(configuration['app'], dict):
-            print("proxy.conf does not contain [app] section")
-            exit
         logging.basicConfig(level=logging.INFO)
 
         logFormatter = logging.Formatter(fmt=' %(name)s %(message)s')

@@ -105,7 +105,7 @@ journalctl -f -u pybtcproxy -n 20
 
 The verbosity of pyBTCProxy depends on the log_level configuration value. Setting it to 'debug' will result in extensive logging, while setting it to 'info' will keep the logging minimal.
 
-A typical log output for a successful proxy operation and block download initiation would resemble the following (assuming log_level is set to 'info'):
+A typical log output for a successful proxy operation and block download initiation would resemble the following:
 
 ```
 Mar 24 00:07:13 localhost python3[935646]: INFO:RpcProxy:🐙 Block 0000000000000000000228aea9b002ee968f2a7e560a448530c33488d8f50b3d Download initiated from peer 596 / lnw64dqngd....ru72vtyd.onion:8333

@@ -1,12 +1,14 @@
 # pyBTCProxy
-pyBTCProxy is a proxy application to run Core Lightning (CLN) and/or lnd with a pruned Bitcoin node
+pyBTCProxy is a proxy application which allow Core Lightning (CLN, and possibly lnd, eclair or other Lightning implementations) with a pruned Bitcoin node.
 
-## lnd users please note this!
-Please note that my motivation to write this script was to run my Core Lightning (CLN) node with a pruned Bitcoin node, so 99% of development and testing was done with CLN. I did a quick test run with an lnd instance, which started up, connected and synced the network graph via pyBTCProxy just like normal, but I did not check how lnd reacts if it tries to retrieve a block that was pruned (timeouts, retries etc.). I could need some help here, so please share your experience, if you run pyBTCProxy with lnd. Also, I didn't test pyBTCProxy with other bitcoin or lightning implementations like btcd or eclair.
+## lnd and eclair users please read this!
+Please note that my motivation to write this script was to run my Core Lightning (CLN) node with a pruned Bitcoin node, so 99% of development and testing was done with CLN. I did a quick test run with an lnd instance, which started up, connected and synced the network graph via pyBTCProxy just like normal, but I did not check how lnd reacts if it tries to retrieve a block that was pruned (timeouts, retries etc.). I could need some help here, so please share your experience, if you run pyBTCProxy with lnd, eclair or anything else. Also, I didn't test pyBTCProxy with other bitcoin implementations like btcd.
 
 
 ## What and Why?
-Theoretically CLN supports running with a pruned Bitcoin node not out-of-the-box. In reality however, after having openened a handful of lightning channels, it usually does not take very long until error like these start to appear in CLN's log file:
+Usually running a Lightning node also requires to run a full Bitcoin node, which in a typical home setup is a Raspberry Pi with a 1 or 2 TB SSD to store the Bitcoin blockchain. While a VPS (virtual private server) with sufficient resources to run the node software is available for a couple of dollars per month, buying ~ 1 TB storage for the Bitcoin blockchain pushes prices quickly beyond a hundred dollars per month. The cheapest VPS usually come with 40 to 80 GB storage space, which would be enough to run a pruned Bitcoin node that keeps for instance 50% (20-40 GB) of the latest blocks.
+
+Theoretically CLN (and lnd) support running with a pruned Bitcoin node not out-of-the-box. In reality however, after having openened a handful of lightning channels, it usually does not take very long until error like these start to appear in CLN's log file:
 
 ```
 2024-03-27T12:28:40.220Z UNUSUAL plugin-bcli: bitcoin-cli -rpcconnect=... -rpcport=... -rpcuser=... -stdinrpcpass getblock 000000000000000000037c083a5da1f3362008a4cdd86e0f231d8956d2a14452 0 exited with status 1
@@ -14,9 +16,9 @@ Theoretically CLN supports running with a pruned Bitcoin node not out-of-the-box
 2024-03-27T12:28:42.254Z UNUSUAL plugin-bcli: bitcoin-cli -rpcconnect=... -rpcport=... -rpcuser=... -stdinrpcpass getblock 000000000000000000037c083a5da1f3362008a4cdd86e0f231d8956d2a14452 0 exited with status 1
 2024-03-27T12:28:43.271Z UNUSUAL plugin-bcli: bitcoin-cli -rpcconnect=... -rpcport=... -rpcuser=... -stdinrpcpass getblock 000000000000000000037c083a5da1f3362008a4cdd86e0f231d8956d2a14452 0 exited with status 1
 ```
-These messages will repeat endlessly and indicate that lightningd was trying to retrieve a block from bitcoind, which has already been pruned, and it retries to download that block every second (without success). 
+These messages will repeat endlessly and indicate that lightningd tries to retrieve a block from bitcoind, which has already been pruned, and it retries to download that block every second without success. 
 
-pyBTCProxy works around this by acting as a proxy application, which will download a block from the internet if has already been pruned. Instead of connecting your lightningd or lnd instance to bitcoind, you connect them to pyBTCProxy which basically forwards all RPC calls to bitcoind and intercepts "getblock" calls to do some extra stuff (initiate the block download, if necessary). 
+pyBTCProxy works around this by acting as a proxy application, which will download a block from the internet if has already been pruned. Instead of connecting your lightningd or lnd instance to bitcoind, you connect it to pyBTCProxy which basically forwards all RPC calls to bitcoind and intercepts "getblock" calls to do some extra stuff (initiate the block download, if necessary). 
 
 Kixunil wrote a similar app in Rust, but the project (https://github.com/Kixunil/btc-rpc-proxy) seems dead and the application stopped working a while ago due to interface changes. As I don't speak enough Rust to understand and fix it, I simply wrote a similar app in Python. 
 

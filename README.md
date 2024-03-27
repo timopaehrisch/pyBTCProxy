@@ -18,6 +18,8 @@ These messages will repeat endlessly and indicate that lightningd was trying to 
 
 pyBTCProxy works around this by acting as a proxy application, which will download a block from the internet if has already been pruned. Instead of connecting your lightningd or lnd instance to bitcoind, you connect them to pyBTCProxy which basically forwards all RPC calls to bitcoind and intercepts "getblock" calls to do some extra stuff (initiate the block download, if necessary). 
 
+Kixunil wrote a similar app in Rust, but the project (https://github.com/Kixunil/btc-rpc-proxy) seems dead and the application stopped working a while ago due to interface changes. As I don't speak enough Rust to understand and fix it, I simply wrote a similar app in Python. 
+
 ## Installation
 
 You can either download the pyBTCProxy.py script manually and create the configuration by hand, or you can clone the repository and use the sample configuration as follows:

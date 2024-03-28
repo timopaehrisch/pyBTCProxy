@@ -117,5 +117,5 @@ In this scenario, lightningd attempts to retrieve a block three times: The initi
 Occasionally pyBTCProxy prints out some heartbeat information to tell you it's alive:
 
 ```
-pyBTCProxy handled 300 requests in 0 days, 0 hours, 1 minutes, 2 seconds
+pyBTCProxy 📊 Handled 300 requests in 0 days, 0 hours, 1 minutes, 2 seconds
 ```

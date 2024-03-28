@@ -26,7 +26,7 @@ pyBTCProxy addresses this issue by serving as a proxy application. It functions 
 
 ## Installation
 
-You have two options for acquiring pyBTCProxy. Firstly, you can manually download the pyBTCProxy.py script and create the configuration settings manually. Alternatively, you can clone the repository and utilize the provided sample configuration as follows:
+It's just a script and a config file. You can clone the repository and utilize the provided sample configuration as follows:
 
 ```
 git clone https://github.com/martinneustein/pyBTCProxy
@@ -50,17 +50,6 @@ bitcoin-rpcport=8331
 bitcoin-rpcuser=<DOES_NOT_MATTER>
 bitcoin-rpcpassword=<DOES_NOT_MATTER>
 ```
-
-### lnd
-lnd config (usually in ~/.lnd/lnd.conf)
-
-```
-# pyBTCProxy
-bitcoind.rpchost=127.0.0.1:8331
-bitcoind.rpcuser=<DOES_NOT_MATTER>
-bitcoind.rpcpass=<DOES_NOT_MATTER>
-```
-
 rpcuser and rpcpassword can be set to any value since pyBTCProxy does not authenticate incoming requests.
 
 ### Running

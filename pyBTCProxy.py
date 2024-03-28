@@ -178,7 +178,7 @@ class pyBTCProxy:
         m = divmod(h[1],60)
         s = m[1]
         runStr = str('%d days, %d hours, %d minutes, %d seconds. ' % (d[0],h[0],m[0],s))
-        runStr += str(len(self.downloadBlockHashes)) + ' block downloads initiated.'
+        runStr += str(len(self.downloadBlockHashes)) + ' blocks were downloaded.'
         return runStr
 
 

@@ -114,8 +114,8 @@ pyBTCProxy 🧈 Block 00000000000000000001ebc605622d: download initiated via pee
 
 In this scenario, lightningd attempts to retrieve a block three times: The initial two attempts fail, prompting pyBTCProxy to initiate a block download from a random peer connected to bitcoind. During the third attempt, no log output is generated, indicating that the block has been successfully downloaded in the interim and returned to lightningd.
 
-Occasionally pyBTCProxy prints out some heartbeat information to tell you it's alive:
+Occasionally pyBTCProxy prints out some stats to tell you it's alive:
 
 ```
-pyBTCProxy 📊 Handled 300 requests in 0 days, 0 hours, 1 minutes, 2 seconds
+pyBTCProxy 📊 Handled 300 requests in 0 days, 0 hours, 4 minutes, 16 seconds. 2 block downloads initiated.
 ```

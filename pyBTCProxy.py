@@ -28,7 +28,7 @@ class pyBTCProxy:
 
         # filter out gettxout
         if method != "gettxout":
-            self.logger.debug(f"-> Incoming request {method} {params}")
+            self.logger.info(f"-> Incoming request {method} {params}")
 
         dest_user = self.config['net']['dest_user']
         dest_pass = self.config['net']['dest_pass']
@@ -100,7 +100,6 @@ class pyBTCProxy:
                     self.logger.debug(f"Block {blockhash} will be downloaded from peer {peer_id} / {peer_addr}")
                     try:
                         getblockfrompeer_result = await self.forward_request(session, 'getblockfrompeer', [blockhash, peer_id])
-                        self.downloadBlockHashes.add(blockhash)
                     except Exception as e:
                         self.logger.error(f"Error calling getblockfrompeer: {str(e)}")
                         getblockfrompeer_result = {'error': str(e)}
@@ -112,6 +111,8 @@ class pyBTCProxy:
                         self.logger.info(f"🧈 Block ...{blockhash[30:]}: could not initiate download via peer {peer_id}: {errMessage}.")
                     else:
                         self.logger.info(f"🧈 Block ...{blockhash[30:]}: download initiated via peer id {peer_id} / {peer_addr}")
+                        self.downloadBlockHashes.add(blockhash)
+
                         if self.waitForDownload:
                             self.logger.debug(f"Waiting {self.waitForDownload}s for download...")
                             time.sleep(self.waitForDownload)

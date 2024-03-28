@@ -108,8 +108,8 @@ The verbosity of pyBTCProxy depends on the log_level configuration value. Settin
 A typical log output for a successful proxy operation and block download initiation would resemble the following:
 
 ```
-pyBTCProxy 🧈 Block 000000000000000000131145921a1020a55c1f59eb67ee32d04ca44e4d51bd6a download initiated from peer id 181 / mxf5qi7dfplca262xiib4l7vwde7cwcdn2jfhgj2nxn3v2szyxllv6qd.onion:8333
-pyBTCProxy 🧈 Block 000000000000000000131145921a1020a55c1f59eb67ee32d04ca44e4d51bd6a download initiated from peer id 937 / 7i555ob2eqx6m47bryffyaf7atkuqr455mmwlsom4e2hojz5ibncirid.onion:8333
+pyBTCProxy 🧈 Block 00000000000000000001ebc605622d: download initiated via peer id 181 / mxf5qi7dfplca262xiib4l7vwde7cwcdn2jfhgj2nxn3v2szyxllv6qd.onion:8333
+pyBTCProxy 🧈 Block 00000000000000000001ebc605622d: download initiated via peer id 937 / 7i555ob2eqx6m47bryffyaf7atkuqr455mmwlsom4e2hojz5ibncirid.onion:8333
 ```
 
 In this scenario, lightningd attempts to retrieve a block three times: The initial two attempts fail, prompting pyBTCProxy to initiate a block download from a random peer connected to bitcoind. During the third attempt, no log output is generated, indicating that the block has been successfully downloaded in the interim and returned to lightningd.

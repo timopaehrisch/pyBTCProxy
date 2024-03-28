@@ -1,9 +1,11 @@
 # pyBTCProxy
-pyBTCProxy is a proxy application that facilitates the operation of Core Lightning (CLN), and potentially other Lightning implementations like lnd or Eclair, alongside a pruned Bitcoin node.
+pyBTCProxy is a proxy application that facilitates the operation of a Core Lightning (CLN) node (and potentially other Lightning implementations) alongside a pruned Bitcoin node.
+In short, it acts as an intermediary between lightningd and bitcoind. Whenever lightningd requests a block that has been pruned, pyBTCProxy prompts bitcoind to download it from its peers.
 
-## Attention lnd and Eclair users, please take note of this!
-Please be aware that my primary motivation for developing this script was to enable the operation of my Core Lightning (CLN) node alongside a pruned Bitcoin node. Consequently, approximately 99% of the development and testing was conducted using CLN. While I conducted a brief test with an lnd instance, which successfully initialized, connected, and synchronized the network graph through pyBTCProxy as expected, I did not thoroughly investigate how lnd reacts when attempting to retrieve pruned blocks (such as timeouts or retries). I would greatly appreciate any assistance or insights from users who have experience running pyBTCProxy with lnd, Eclair, or any other Lightning implementations. It's important to note that my testing of pyBTCProxy was exclusively conducted with the Bitcoin Core implementation of bitcoind.
+## Not tested with lnd, Eclair etc.
+Please be aware that my primary motivation for developing this script was to enable the operation of my Core Lightning (CLN) node alongside a pruned Bitcoin node. Consequently, approximately 99% of the development and testing was conducted using CLN. While I conducted a brief test with an lnd instance, which successfully initialized, connected, and synchronized the network graph through pyBTCProxy as expected, I did not thoroughly investigate how lnd reacts when attempting to retrieve pruned blocks (such as timeouts or retries). 
 
+[It seems that lnd already includes functionality to download missing blocks for pruned nodes.](https://github.com/btcsuite/btcwallet/blob/5df09dd4335865dde2a9a6d94a26a7f5779af825/chain/bitcoind_conn.go#L474) Therefore, using pyBTCProxy with lnd might not be necessary. As for other implementations like Eclair, I'm not certain about their handling of this issue. If you have information on this, please share.
 
 ## What? Why?
 Typically, operating a Lightning node entails running a full Bitcoin node, commonly achieved through a Raspberry Pi setup equipped with a 1 or 2 TB SSD to accommodate the Bitcoin blockchain. However, opting for a virtual private server (VPS) with adequate resources to support the node software is an alternative, often costing just a few dollars per month. Conversely, obtaining approximately 1 TB of storage solely for the Bitcoin blockchain can significantly escalate expenses, exceeding a hundred dollars per month. Most budget-friendly VPS plans offer storage capacities ranging from 40 to 80 GB, sufficient for running a pruned Bitcoin node that retains around 50% (20-40 GB) of the latest blocks.
@@ -20,7 +22,7 @@ These messages will continue to appear repeatedly, signaling that lightningd att
 
 pyBTCProxy addresses this issue by serving as a proxy application. It functions by retrieving a block from the internet if it has been pruned. Instead of connecting your lightningd or lnd instance directly to bitcoind, you establish the connection with pyBTCProxy. This intermediary forwards all RPC calls to bitcoind and intercepts 'getblock' calls to perform additional actions, such as initiating the block download when necessary.
 
-Kixunil developed a similar application in Rust, but the project (https://github.com/Kixunil/btc-rpc-proxy) appears to be inactive, and the application ceased functioning some time ago due to interface changes. Since I lack proficiency in Rust to understand and address the issue, I opted to create a similar application in Python.
+[Kixunil developed a similar application in Rust](https://github.com/Kixunil/btc-rpc-proxy), but the project appears to be inactive, and the application ceased functioning some time ago due to interface changes. Since I lack proficiency in Rust to understand and address the issue, I opted to create a similar application in Python.
 
 ## Installation
 

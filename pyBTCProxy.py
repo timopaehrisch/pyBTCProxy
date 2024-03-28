@@ -19,7 +19,7 @@ class pyBTCProxy:
     async def handle_request(self, request):
         data = await request.text()
         self.requestCounter += 1
-        if ((self.requestCounter < 100 and self.requestCounter % 10 == 0) or self.requestCounter % 100 == 0):
+        if ((self.requestCounter < 100 and self.requestCounter % 10 == 0) or self.requestCounter % 1009 == 0):
             self.logger.info(f"📊 Handled {self.requestCounter} requests in " + self.getStatsString())
 
         request_json = json.loads(data)
@@ -28,7 +28,7 @@ class pyBTCProxy:
 
         # filter out gettxout
         if method != "gettxout":
-            self.logger.info(f"-> Incoming request {method} {params}")
+            self.logger.debug(f"-> Incoming request {method} {params}")
 
         dest_user = self.config['net']['dest_user']
         dest_pass = self.config['net']['dest_pass']

@@ -60,7 +60,7 @@ class pyBTCProxy:
                 self.logger.error(f"Error forwarding generic request: {str(e)}")
                 response = {'error': str(e)}
             responseText = await response.text()
-            return web.Response(text=responseText)
+            return web.Response(text=responseText, content_type='application/json')
 
     async def forward_request(self, session, method, params):
         destipadress = self.config['net']['dest_ip']
@@ -69,7 +69,7 @@ class pyBTCProxy:
 
         async with session.post(url, json={"method": method, "params": params}) as response:
             data = await response.text()
-            self.logger.debug(f"RAW Response from forward_request: {method}: {data}")
+            self.logger.debug(f"Response from forward_request: {method}: {data}")
             return response
         
     async def handle_getblock_error(self, session, params, errorResponse):

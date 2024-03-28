@@ -12,9 +12,6 @@ class pyBTCProxy:
         self.logger = logging.getLogger('pyBTCProxy')
         self.waitForDownload = 0
         self.config = None
-        self.emojiLogs = True
-        self.emojis = ["😘", "🧢", "🙈","🐱","🐙","🐠","🌳","🍔","🚚","🎯",
-                        "🗾","🌅","💡","🔫","🧼","👻","🪭","🧚","🧠","💚"]
         self.requestCounter = 0
         self.startTime = int(time.time())
 
@@ -80,16 +77,11 @@ class pyBTCProxy:
         errorCode = errorDict['error']['code']
         errorMessage = errorDict['error']['message']
         blockhash = params[0]
-        emoji = ""
 
         catchErrorCodes = [-5, -1]
         if errorCode not in catchErrorCodes:
             self.logger.error(f"Unexpected Error {errorCode}: {errorMessage}")
         else:
-            if (self.emojiLogs):
-                randInt = random.randint(0,19)
-                emoji = self.emojis[randInt] + " "
-
             self.logger.debug(f"Block {blockhash} not found, might have been pruned; select random peer to download from")
             peerInfoResp = await self.forward_request(session, 'getpeerinfo', [])
             peerInfoResponseText = await peerInfoResp.text()
@@ -115,9 +107,9 @@ class pyBTCProxy:
 
                     if 'error' in getBlockFromPeerDict and getBlockFromPeerDict['error'] != None:
                         errMessage = getBlockFromPeerDict['error']['message']
-                        self.logger.info(f"{emoji}{blockhash} could not initiate download from peer {peer_id}: {errMessage}.")
+                        self.logger.info(f"🧈 Block {blockhash[:30]}: could not initiate download via peer {peer_id}: {errMessage}.")
                     else:
-                        self.logger.info(f"{emoji}Block {blockhash} download initiated from peer id {peer_id} / {peer_addr}")
+                        self.logger.info(f"🧈 Block {blockhash[:30]}: download initiated via peer id {peer_id} / {peer_addr}")
                         if self.waitForDownload:
                             self.logger.debug(f"Waiting {self.waitForDownload}s for download...")
                             time.sleep(self.waitForDownload)
@@ -173,8 +165,6 @@ class pyBTCProxy:
 
         if isinstance(configuration['app']['wait_for_download'], str):
             self.waitForDownload = configuration.getint('app','wait_for_download')
-        if isinstance(configuration['app']['log_with_emojis'], str):
-            self.emojiLogs = configuration.getboolean('app','log_with_emojis')
         
         self.config = configuration
 

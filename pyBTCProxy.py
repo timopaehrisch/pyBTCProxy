@@ -14,12 +14,13 @@ class pyBTCProxy:
         self.config = None
         self.requestCounter = 0
         self.startTime = int(time.time())
+        self.downloadBlockHashes = set()
 
     async def handle_request(self, request):
         data = await request.text()
         self.requestCounter += 1
         if ((self.requestCounter < 100 and self.requestCounter % 10 == 0) or self.requestCounter % 100 == 0):
-            self.logger.info(f"handled {self.requestCounter} requests in " + self.getRuntimeString())
+            self.logger.info(f"📊 Handled {self.requestCounter} requests in " + self.getStatsString())
 
         request_json = json.loads(data)
         method = request_json.get('method', '')
@@ -99,6 +100,7 @@ class pyBTCProxy:
                     self.logger.debug(f"Block {blockhash} will be downloaded from peer {peer_id} / {peer_addr}")
                     try:
                         getblockfrompeer_result = await self.forward_request(session, 'getblockfrompeer', [blockhash, peer_id])
+                        self.downloadBlockHashes.add(blockhash)
                     except Exception as e:
                         self.logger.error(f"Error calling getblockfrompeer: {str(e)}")
                         getblockfrompeer_result = {'error': str(e)}
@@ -107,9 +109,9 @@ class pyBTCProxy:
 
                     if 'error' in getBlockFromPeerDict and getBlockFromPeerDict['error'] != None:
                         errMessage = getBlockFromPeerDict['error']['message']
-                        self.logger.info(f"🧈 Block {blockhash[:30]}: could not initiate download via peer {peer_id}: {errMessage}.")
+                        self.logger.info(f"🧈 Block ...{blockhash[30:]}: could not initiate download via peer {peer_id}: {errMessage}.")
                     else:
-                        self.logger.info(f"🧈 Block {blockhash[:30]}: download initiated via peer id {peer_id} / {peer_addr}")
+                        self.logger.info(f"🧈 Block ...{blockhash[30:]}: download initiated via peer id {peer_id} / {peer_addr}")
                         if self.waitForDownload:
                             self.logger.debug(f"Waiting {self.waitForDownload}s for download...")
                             time.sleep(self.waitForDownload)
@@ -168,13 +170,14 @@ class pyBTCProxy:
         
         self.config = configuration
 
-    def getRuntimeString(self):
+    def getStatsString(self):
         now = int(time.time())
         d = divmod(now-self.startTime,86400)
         h = divmod(d[1],3600)
         m = divmod(h[1],60)
         s = m[1]
-        runStr = str('%d days, %d hours, %d minutes, %d seconds' % (d[0],h[0],m[0],s))
+        runStr = str('%d days, %d hours, %d minutes, %d seconds. ' % (d[0],h[0],m[0],s))
+        runStr += str(len(self.downloadBlockHashes)) + ' block downloads initiated.'
         return runStr
 
 

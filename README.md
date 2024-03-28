@@ -114,7 +114,7 @@ pyBTCProxy 🧠 Block 000000000000000000131145921a1020a55c1f59eb67ee32d04ca44e4d
 
 In this scenario, lightningd attempts to retrieve a block three times: The initial two attempts fail, prompting pyBTCProxy to initiate a block download from a random peer connected to bitcoind. During the third attempt, no log output is generated, indicating that the block has been successfully downloaded in the interim and returned to lightningd.
 
-Occasionally pyBTCProxy prints out some heartbeat information:
+Occasionally pyBTCProxy prints out some heartbeat information to tell you it's alive:
 
 ```
 pyBTCProxy handled 300 requests in 0 days, 0 hours, 1 minutes, 2 seconds

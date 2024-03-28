@@ -16,12 +16,13 @@ class pyBTCProxy:
         self.emojis = ["😘", "🧢", "🙈","🐱","🐙","🐠","🌳","🍔","🚚","🎯",
                         "🗾","🌅","💡","🔫","🧼","👻","🪭","🧚","🧠","💚"]
         self.requestCounter = 0
+        self.startTime = int(time.time())
 
     async def handle_request(self, request):
         data = await request.text()
         self.requestCounter += 1
-        if (self.requestCounter % 100 == 0):
-            self.logger.info(f"handled {self.requestCounter} requests")
+        if ((self.requestCounter < 100 and self.requestCounter % 10 == 0) or self.requestCounter % 100 == 0):
+            self.logger.info(f"handled {self.requestCounter} requests in " + self.getRuntimeString())
 
         request_json = json.loads(data)
         method = request_json.get('method', '')
@@ -176,6 +177,15 @@ class pyBTCProxy:
             self.emojiLogs = configuration.getboolean('app','log_with_emojis')
         
         self.config = configuration
+
+    def getRuntimeString(self):
+        now = int(time.time())
+        d = divmod(now-self.startTime,86400)
+        h = divmod(d[1],3600)
+        m = divmod(h[1],60)
+        s = m[1]
+        runStr = str('%d days, %d hours, %d minutes, %d seconds' % (d[0],h[0],m[0],s))
+        return runStr
 
 
 if __name__ == "__main__":

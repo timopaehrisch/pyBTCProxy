@@ -4,6 +4,7 @@ import aiohttp
 import logging
 import time
 import configparser 
+import threading
 from aiohttp import web, BasicAuth
 
 
@@ -19,8 +20,8 @@ class pyBTCProxy:
     async def handle_request(self, request):
         data = await request.text()
         self.requestCounter += 1
-        if ((self.requestCounter < 100 and self.requestCounter % 10 == 0) or self.requestCounter % 1009 == 0):
-            self.logger.info(f"📊 Handled {self.requestCounter} requests in " + self.getStatsString())
+#        if ((self.requestCounter < 100 and self.requestCounter % 10 == 0) or self.requestCounter % 1009 == 0):
+#            self.logger.info(f"📊 Handled {self.requestCounter} requests in " + self.getStatsString())
 
         request_json = json.loads(data)
         method = request_json.get('method', '')
@@ -125,6 +126,12 @@ class pyBTCProxy:
         self.initConfig()
         ipadress = self.config['net']['listen_ip']
         portnumber = self.config.getint('net', 'listen_port')
+
+        # Statistics Thread
+        thr = threading.Thread(target=self.statsLoop, args=(), daemon=True)
+        self.logger.info("Starting Thread.")
+        thr.start()
+
         web.run_app(app, host=ipadress, port=portnumber)
 
 
@@ -171,16 +178,19 @@ class pyBTCProxy:
         
         self.config = configuration
 
-    def getStatsString(self):
-        now = int(time.time())
-        d = divmod(now-self.startTime,86400)
-        h = divmod(d[1],3600)
-        m = divmod(h[1],60)
-        s = m[1]
-        runStr = str('%d days, %d hours, %d minutes, %d seconds. ' % (d[0],h[0],m[0],s))
-        runStr += str(len(self.downloadBlockHashes)) + ' blocks were downloaded.'
-        return runStr
 
+    def statsLoop(self):
+        while True:
+            now = int(time.time())
+            d = divmod(now-self.startTime,86400)
+            h = divmod(d[1],3600)
+            m = divmod(h[1],60)
+            s = m[1]
+            logStr = f"📊 Handled {self.requestCounter} requests in "
+            logStr += str('%d days, %d hours, %d minutes, %d seconds. ' % (d[0],h[0],m[0],s))
+            logStr += str(len(self.downloadBlockHashes)) + ' blocks were downloaded.'
+            self.logger.info(logStr)
+            time.sleep(1800) 
 
 if __name__ == "__main__":
     rpc_proxy = pyBTCProxy()

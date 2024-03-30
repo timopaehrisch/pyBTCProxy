@@ -71,7 +71,7 @@ After=bitcoind.service
 
 [Service]
 WorkingDirectory=/path/to/pyBTCProxy
-ExecStart=python3 /path/to/pyBTCProxy
+ExecStart=python3 /path/to/pyBTCProxy/pyBTCProxy.py
 
 User=bitcoin
 Group=bitcoin

@@ -20,16 +20,11 @@ class pyBTCProxy:
     async def handle_request(self, request):
         data = await request.text()
         self.requestCounter += 1
-#        if ((self.requestCounter < 100 and self.requestCounter % 10 == 0) or self.requestCounter % 1009 == 0):
-#            self.logger.info(f"📊 Handled {self.requestCounter} requests in " + self.getStatsString())
-
         request_json = json.loads(data)
         method = request_json.get('method', '')
         params = request_json.get('params', [])
 
-        # filter out gettxout
-        if method != "gettxout":
-            self.logger.debug(f"-> Incoming request {method} {params}")
+        if method != 'gettxout': self.logger.info(f"-> Incoming request {method} {params}")
 
         dest_user = self.config['net']['dest_user']
         dest_pass = self.config['net']['dest_pass']
@@ -50,7 +45,7 @@ class pyBTCProxy:
                     self.logger.debug(f"Cannot retrieve block from bitcoind: {dictResponse}")
                     getBlockErrorResponse = await self.handle_getblock_error(session, fakeParams, response)
                     responseText = await getBlockErrorResponse.text()
-                return web.Response(text=responseText)
+                return web.Response(text=responseText, content_type='application/json')
 
 
         async with aiohttp.ClientSession(auth=BasicAuth(dest_user, dest_pass)) as session:

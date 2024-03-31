@@ -24,7 +24,7 @@ class pyBTCProxy:
         method = request_json.get('method', '')
         params = request_json.get('params', [])
 
-        if method != 'gettxout': self.logger.info(f"-> Incoming request {method} {params}")
+        if method != 'gettxout': self.logger.debug(f"-> Incoming request {method} {params}")
 
         dest_user = self.config['net']['dest_user']
         dest_pass = self.config['net']['dest_pass']

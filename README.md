@@ -71,7 +71,7 @@ After=bitcoind.service
 
 [Service]
 WorkingDirectory=/path/to/pyBTCProxy
-ExecStart=python3 /path/to/pyBTCProxy
+ExecStart=python3 /path/to/pyBTCProxy/pyBTCProxy.py
 
 User=bitcoin
 Group=bitcoin
@@ -110,3 +110,5 @@ Occasionally pyBTCProxy prints out some stats to tell you it's alive:
 ```
 pyBTCProxy 📊 Handled 1645 requests in 0 days, 2 hours, 1 minutes, 1 seconds. 0 blocks were downloaded.
 ```
+
+The block download behaves very irregularly. Sometimes, nothing happens for days, then suddenly 100 blocks are downloaded in 15 minutes.

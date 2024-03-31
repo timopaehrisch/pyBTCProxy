@@ -124,7 +124,6 @@ class pyBTCProxy:
 
         # Statistics Thread
         thr = threading.Thread(target=self.statsLoop, args=(), daemon=True)
-        self.logger.info("Starting Thread.")
         thr.start()
 
         web.run_app(app, host=ipadress, port=portnumber)

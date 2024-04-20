@@ -1,6 +1,6 @@
 # pyBTCProxy
 pyBTCProxy is a proxy application that facilitates the operation of a Core Lightning (CLN) node (and potentially other Lightning implementations) alongside a pruned Bitcoin node.
-In short, it acts as an intermediary between lightningd and bitcoind. Whenever lightningd requests a block that has been pruned, pyBTCProxy prompts bitcoind to download it from its peers.
+In short, it acts as an intermediary between lightningd and bitcoind. Whenever lightningd requests a block that has been pruned, pyBTCProxy prompts bitcoind to download it from its peers, using ```getblockfrompeer```, which was introduced with bitcoind v24.
 
 ## Not tested with lnd, Eclair etc.
 Please be aware that my primary motivation for developing this script was to enable the operation of my Core Lightning (CLN) node alongside a pruned Bitcoin node. Consequently, approximately 99% of the development and testing was conducted using CLN. While I conducted a brief test with an lnd instance, which successfully initialized, connected, and synchronized the network graph through pyBTCProxy as expected, I did not thoroughly investigate how lnd reacts when attempting to retrieve pruned blocks (such as timeouts or retries). 

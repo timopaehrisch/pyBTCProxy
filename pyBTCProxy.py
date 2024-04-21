@@ -6,6 +6,7 @@ import time
 import configparser 
 import threading
 from aiohttp import web, BasicAuth
+    
 
 
 class pyBTCProxy:
@@ -17,6 +18,7 @@ class pyBTCProxy:
         self.startTime = int(time.time())
         self.downloadBlockHashes = set()
 
+
     async def handle_request(self, request):
         data = await request.text()
         self.requestCounter += 1
@@ -24,7 +26,7 @@ class pyBTCProxy:
         method = request_json.get('method', '')
         params = request_json.get('params', [])
 
-        if method != 'gettxout': self.logger.debug(f"-> Incoming request {method} {params}")
+        if method != 'gettxout': self.logger.info(f"-> Incoming request {method} {params}")
 
         dest_user = self.config['net']['dest_user']
         dest_pass = self.config['net']['dest_pass']
@@ -185,6 +187,7 @@ class pyBTCProxy:
             logStr += str(len(self.downloadBlockHashes)) + ' blocks were downloaded.'
             self.logger.info(logStr)
             time.sleep(1800) 
+
 
 if __name__ == "__main__":
     rpc_proxy = pyBTCProxy()

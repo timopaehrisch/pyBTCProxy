@@ -11,7 +11,7 @@ class BTCProxy:
 
     async def handle_request(self, request):
         data = await request.text()
-        ctx().requestCounter += 1
+        ctx.requestCounter += 1
         request_json = json.loads(data)
         method = request_json.get('method', '')
         params = request_json.get('params', [])
@@ -19,8 +19,8 @@ class BTCProxy:
         if method != 'gettxout':
             log().info(f"-> Incoming request {method} {params}")
 
-        dest_user = self.config['net']['dest_user']
-        dest_pass = self.config['net']['dest_pass']
+        dest_user = getConfigValue('net','dest_user')
+        dest_pass = getConfigValue('net','dest_pass')
 
         if method == 'getblock':
             async with aiohttp.ClientSession(auth=BasicAuth(dest_user, dest_pass)) as session:
@@ -49,8 +49,8 @@ class BTCProxy:
             return web.Response(text=responseText, content_type='application/json')
 
     async def forward_request(self, session, method, params):
-        destipadress = self.config['net']['dest_ip']
-        destportnumber = self.config.getint('net', 'dest_port')
+        destipadress = getConfigValue('net','dest_ip')
+        destportnumber = getConfigValue('net','dest_port')
         url = f"http://{destipadress}:{destportnumber}"
 
         async with session.post(url, json={"method": method, "params": params}) as response:
@@ -124,9 +124,9 @@ class BTCProxy:
             await asyncio.sleep(1800)
 
     def start(self):
-        asyncio.run(self._start())
-
-    def _start(self):
+#        asyncio.run(self._start(), debug=True)
+    
+#    def _start(self):
         app = web.Application()
         app.router.add_post('/', self.handle_request)
 
@@ -134,16 +134,21 @@ class BTCProxy:
         portnumber = getConfigValue('net', 'listen_port')
 
         # Start the event loop
-        asyncio.run(self._run_server(app, ipadress, portnumber))
+        asyncio.run(self._run_server(app, ipadress, portnumber), debug=True)
 
     async def _run_server(self, app, ipadress, portnumber):
         # Start statsLoop asynchronously
-        asyncio.create_task(self.statsLoop())
+        log().info(f"Created task Task#{ctx.taskCounter}")
+        task = asyncio.create_task(self.statsLoop(), name="Statistics Task#{ctx.taskCounter}")
+        ctx.taskCounter += 1
+        ctx.background_tasks.add(task)
+        task.add_done_callback(ctx.background_tasks.discard)
+
 
         # Run the web server
         runner = web.AppRunner(app)
         await runner.setup()
         site = web.TCPSite(runner, ipadress, portnumber)
         await site.start()
-        log().info(f"Listening on {ipadress}:{portnumber}.")
+        log().info(f"Listening on {ipadress}:{portnumber}.bitcoinproxy/context.py")
         await asyncio.Event().wait()  # Wait forever

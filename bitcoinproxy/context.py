@@ -74,6 +74,9 @@ class BTCProxyContext:
         self.startTime = int(time.time())
         self.downloadBlockHashes = set()
         self.requestCounter = 0
+        self.background_tasks = set()
+        self.taskCounter = 0
+
         logger.info("Context successfully initialized.")
 
 

@@ -1,30 +1,23 @@
 import json
 import random
 import aiohttp
-import logging
-import time
-import configparser
+import logging 
 import asyncio
+import time
 from aiohttp import web, BasicAuth
+from .context import *
 
-class pyBTCProxy:
-    def __init__(self):
-        self.logger = logging.getLogger('pyBTCProxy')
-        self.waitForDownload = 0
-        self.config = None
-        self.requestCounter = 0
-        self.startTime = int(time.time())
-        self.downloadBlockHashes = set()
+class BTCProxy:
 
     async def handle_request(self, request):
         data = await request.text()
-        self.requestCounter += 1
+        ctx().requestCounter += 1
         request_json = json.loads(data)
         method = request_json.get('method', '')
         params = request_json.get('params', [])
 
-        if method != 'gettxout': 
-            self.logger.info(f"-> Incoming request {method} {params}")
+        if method != 'gettxout':
+            log().info(f"-> Incoming request {method} {params}")
 
         dest_user = self.config['net']['dest_user']
         dest_pass = self.config['net']['dest_pass']
@@ -35,13 +28,13 @@ class pyBTCProxy:
                 try:
                     response = await self.forward_request(session, method, fakeParams)
                 except Exception as e:
-                    self.logger.error(f"Error forwarding getblock request: {str(e)}")
+                    log().error(f"Error forwarding getblock request: {str(e)}")
                     response = {'error': str(e)}
 
                 responseText = await response.text()
                 dictResponse = json.loads(responseText)
                 if 'error' in dictResponse and dictResponse['error'] != None:
-                    self.logger.debug(f"Cannot retrieve block from bitcoind: {dictResponse}")
+                    log().debug(f"Cannot retrieve block from bitcoind: {dictResponse}")
                     getBlockErrorResponse = await self.handle_getblock_error(session, fakeParams, response)
                     responseText = await getBlockErrorResponse.text()
                 return web.Response(text=responseText, content_type='application/json')
@@ -50,7 +43,7 @@ class pyBTCProxy:
             try:
                 response = await self.forward_request(session, method, params)
             except Exception as e:
-                self.logger.error(f"Error forwarding generic request: {str(e)}")
+                log().error(f"Error forwarding generic request: {str(e)}")
                 response = {'error': str(e)}
             responseText = await response.text()
             return web.Response(text=responseText, content_type='application/json')
@@ -62,7 +55,7 @@ class pyBTCProxy:
 
         async with session.post(url, json={"method": method, "params": params}) as response:
             data = await response.text()
-            self.logger.debug(f"Response from forward_request: {method}: {data}")
+            log().debug(f"Response from forward_request: {method}: {data}")
             return response
 
     async def handle_getblock_error(self, session, params, errorResponse):
@@ -74,40 +67,44 @@ class pyBTCProxy:
 
         catchErrorCodes = [-5, -1]
         if errorCode not in catchErrorCodes:
-            self.logger.error(f"Unexpected Error {errorCode}: {errorMessage}")
+            log().error(f"Unexpected Error {errorCode}: {errorMessage}")
         else:
-            self.logger.debug(f"Block {blockhash} not found, might have been pruned; select random peer to download from")
+            log().debug(
+                f"Block {blockhash} not found, might have been pruned; select random peer to download from")
             peerInfoResp = await self.forward_request(session, 'getpeerinfo', [])
             peerInfoResponseText = await peerInfoResp.text()
             peerInfoDict = json.loads(peerInfoResponseText)
             if 'result' in peerInfoDict:
                 peerEntries = peerInfoDict["result"]
-                self.logger.debug(f"Got {len(peerEntries)} peerIds")
+                log().debug(f"Got {len(peerEntries)} peerIds")
                 if len(peerEntries) == 0:
-                    self.logger.error("No peers to download from found. Is bitcoind connected to the internet?")
+                    log().error("No peers to download from found. Is bitcoind connected to the internet?")
                 else:
                     # select random entry
                     randomPeer = random.choice(peerEntries)
                     peer_id = randomPeer.get('id', '')
                     peer_addr = randomPeer.get('addr', '')
-                    self.logger.debug(f"Block {blockhash} will be downloaded from peer {peer_id} / {peer_addr}")
+                    log().debug(f"Block {blockhash} will be downloaded from peer {peer_id} / {peer_addr}")
                     try:
-                        getblockfrompeer_result = await self.forward_request(session, 'getblockfrompeer', [blockhash, peer_id])
+                        getblockfrompeer_result = await self.forward_request(session, 'getblockfrompeer',
+                                                                             [blockhash, peer_id])
                     except Exception as e:
-                        self.logger.error(f"Error calling getblockfrompeer: {str(e)}")
+                        log().error(f"Error calling getblockfrompeer: {str(e)}")
                         getblockfrompeer_result = {'error': str(e)}
                     getBlockFromPeerDict = json.loads(await getblockfrompeer_result.text())
-                    self.logger.debug(f"getBlockFromPeerDict:  {getBlockFromPeerDict}")
+                    log().debug(f"getBlockFromPeerDict:  {getBlockFromPeerDict}")
 
                     if 'error' in getBlockFromPeerDict and getBlockFromPeerDict['error'] != None:
                         errMessage = getBlockFromPeerDict['error']['message']
-                        self.logger.info(f"🧈 Block ...{blockhash[30:]}: could not initiate download via peer {peer_id}: {errMessage}.")
+                        log().info(
+                            f"🧈 Block ...{blockhash[30:]}: could not initiate download via peer {peer_id}: {errMessage}.")
                     else:
-                        self.logger.info(f"🧈 Block ...{blockhash[30:]}: download initiated via peer id {peer_id} / {peer_addr}")
+                        log().info(
+                            f"🧈 Block ...{blockhash[30:]}: download initiated via peer id {peer_id} / {peer_addr}")
                         self.downloadBlockHashes.add(blockhash)
 
                         if self.waitForDownload:
-                            self.logger.debug(f"Waiting {self.waitForDownload}s for download...")
+                            log().debug(f"Waiting {self.waitForDownload}s for download...")
                             time.sleep(self.waitForDownload)
                     getBlockResponse = await self.forward_request(session, 'getblock', [blockhash, 0])
                     return getBlockResponse
@@ -115,28 +112,31 @@ class pyBTCProxy:
     async def statsLoop(self):
         while True:
             now = int(time.time())
-            d = divmod(now - self.startTime, 86400)
+            d = divmod(now - ctx.startTime, 86400)
             h = divmod(d[1], 3600)
             m = divmod(h[1], 60)
             s = m[1]
-            logStr = f"📊 Handled {self.requestCounter} requests in "
+            logStr = f"📊 Handled {ctx.requestCounter} requests in "
             logStr += str('%d days, %d hours, %d minutes, %d seconds. ' % (d[0], h[0], m[0], s))
-            logStr += str(len(self.downloadBlockHashes)) + ' blocks were downloaded.'
-            self.logger.info(logStr)
+            logStr += str(len(ctx.downloadBlockHashes)) + ' blocks were downloaded.'
+            if ctx.requestCounter != 0:
+                log().info(logStr)
             await asyncio.sleep(1800)
 
     def start(self):
+        asyncio.run(self._start())
+
+    def _start(self):
         app = web.Application()
         app.router.add_post('/', self.handle_request)
-        self.initConfig()
-        ipadress = self.config['net']['listen_ip']
-        portnumber = self.config.getint('net', 'listen_port')
+
+        ipadress = getConfigValue('net','listen_ip')
+        portnumber = getConfigValue('net', 'listen_port')
 
         # Start the event loop
-        asyncio.run(self.run_server(app, ipadress, portnumber))
-        self.logger.info("Started")
+        asyncio.run(self._run_server(app, ipadress, portnumber))
 
-    async def run_server(self, app, ipadress, portnumber):
+    async def _run_server(self, app, ipadress, portnumber):
         # Start statsLoop asynchronously
         asyncio.create_task(self.statsLoop())
 
@@ -145,53 +145,5 @@ class pyBTCProxy:
         await runner.setup()
         site = web.TCPSite(runner, ipadress, portnumber)
         await site.start()
+        log().info(f"Listening on {ipadress}:{portnumber}.")
         await asyncio.Event().wait()  # Wait forever
-
-        
-
-    def initConfig(self):
-        configuration = configparser.ConfigParser()
-        configuration.read('proxy.conf')
-
-        # Section [net]
-        if not isinstance(configuration['net']['listen_ip'], str):
-            configuration['net']['listen_ip'] = '127.0.0.1'
-        if not isinstance(configuration['net']['listen_port'], str):
-            configuration['net']['listen_port'] = '8331'
-        if not isinstance(configuration['net']['dest_ip'], str):
-            configuration['net']['dest_ip'] = '127.0.0.1'
-        if not isinstance(configuration['net']['dest_port'], str):
-            configuration['net']['dest_port'] = '8332'
-        if not isinstance(configuration['net']['dest_user'], str):
-            print("You have to provide an RPC user in proxy.conf")
-            exit
-        if not isinstance(configuration['net']['dest_pass'], str):
-            print("You have to provide an RPC password in proxy.conf")
-            exit
-
-        # Section [app]
-        logging.basicConfig(level=logging.INFO)
-
-        logFormatter = logging.Formatter(fmt=' %(name)s %(message)s')
-        consoleHandler = logging.StreamHandler()
-        consoleHandler.setLevel(logging.INFO)
-        consoleHandler.setFormatter(logFormatter)
-        logger = logging.getLogger('pyBTCProxy')
-
-        if isinstance(configuration['app']['log_level'], str) and str(configuration['app']['log_level']).lower() == 'debug':
-            consoleHandler.setLevel(logging.DEBUG)
-        logger.handlers.clear()
-        logger.addHandler(consoleHandler)
-        logger.propagate = False
-
-        # noisy aiohttp
-        logging.getLogger('aiohttp').setLevel(logging.WARNING)
-
-        if isinstance(configuration['app']['wait_for_download'], str):
-            self.waitForDownload = configuration.getint('app', 'wait_for_download')
-
-        self.config = configuration
-
-if __name__ == "__main__":
-    rpc_proxy = pyBTCProxy()
-    asyncio.run(rpc_proxy.start())

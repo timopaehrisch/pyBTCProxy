@@ -8,4 +8,5 @@ test_proxy.py
 ._*
 .Spotlight-V100
 .vscode
+.idea
 __pycache__

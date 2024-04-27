@@ -1,5 +1,8 @@
 proxy.conf
 dlblock.sh
+nodestats.py
+pyBTCProxy.py
+test_proxy.py
 .DS_Store
 .DS_Store?
 ._*

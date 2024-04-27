@@ -1,21 +1,14 @@
 import configparser
 import logging
 import time
+import asyncio
+
 
 __all__ = [
     'ctx',
-    'getConfigValue',
-    'log',
     'BTCProxyContext',
+    'LOG'
 ]
-
-def log():
-    return ctx.logger
-
-def getConfigValue(section, key):
-    if isinstance(ctx.config[section][key], str):
-        return ctx.config[section][key]
-    print(f"config or config value {section}:{key} is not defined.")
 
 class BTCProxyContext:
     _instance = None
@@ -65,7 +58,6 @@ class BTCProxyContext:
         # noisy aiohttp
         logging.getLogger('aiohttp').setLevel(logging.WARNING)
 
-
         if not isinstance(_conf['app']['wait_for_download'], str):
             _conf['app']['wait_for_download'] = '0'
 
@@ -77,8 +69,35 @@ class BTCProxyContext:
         self.background_tasks = set()
         self.taskCounter = 0
 
-        logger.info("Context successfully initialized.")
+       # initialize statistics task
+        asyncio.run(self._runStatsTask())
 
+        logger.info("Context initialized.")
+
+    async def _runStatsTask(self):
+        statisticsTask = asyncio.create_task(self.statsTask(), name="Statistics Task#{self.taskCounter}")
+        self.taskCounter += 1
+        self.background_tasks.add(statisticsTask)
+        statisticsTask.add_done_callback(self.background_tasks.discard)
+
+    async def statsTask(self):
+        while True:
+            if self.requestCounter != 0:
+                now = int(time.time())
+                d = divmod(now - self.startTime, 86400)
+                h = divmod(d[1], 3600)
+                m = divmod(h[1], 60)
+                s = m[1]
+                logStr = f"📊 Handled {self.requestCounter} requests in "
+                logStr += str('%d days, %d hours, %d minutes, %d seconds. ' % (d[0], h[0], m[0], s))
+                logStr += str(len(self.downloadBlockHashes)) + ' blocks were downloaded.'
+                self.logger.info(logStr)
+            await asyncio.sleep(1800)
+
+    def getConfigValue(self, section, key):
+        if isinstance(ctx.config[section][key], str):
+            return ctx.config[section][key]
+        LOG.error(f"config or config value {section}:{key} is not defined.")
 
 ctx = BTCProxyContext()
-#ctx.initialize()
+LOG = ctx.logger

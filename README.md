@@ -57,12 +57,12 @@ rpcuser and rpcpassword can be set to any value since pyBTCProxy does not authen
 To start pyBTCProxy, simply execute the following command:
 
 ```
-python3 pyBTCProxy.py
+python3 startProxy.py
 ```
 
 ### systemd script
 
-If you wish to start pyBTCProxy during system startup, create a file named /etc/systemd/system/pybtcproxy.service and include the following content:
+If you wish to start pyBTCProxy via systemd, create a file named /etc/systemd/system/pybtcproxy.service and include the following content:
 
 ```
 [Unit]

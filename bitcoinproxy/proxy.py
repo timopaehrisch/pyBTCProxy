@@ -1,7 +1,6 @@
 import json
 import random
 import aiohttp
-import logging 
 import asyncio
 import time
 from aiohttp import web, BasicAuth

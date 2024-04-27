@@ -4,7 +4,7 @@ import aiohttp
 import asyncio
 import time
 from aiohttp import web, BasicAuth
-from .context import *
+from context import *
 
 class BTCProxy:
 
@@ -147,3 +147,8 @@ class BTCProxy:
     async def _handle(self, request):
             response = await self.handle_request(request)
             return response
+
+
+if __name__ == "__main__":
+    rpc_proxy = BTCProxy()
+    rpc_proxy.start()

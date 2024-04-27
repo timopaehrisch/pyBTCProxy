@@ -1,8 +1,12 @@
 proxy.conf
 dlblock.sh
+nodestats.py
+pyBTCProxy.py
+test_proxy.py
 .DS_Store
 .DS_Store?
 ._*
 .Spotlight-V100
 .vscode
+.idea
 __pycache__

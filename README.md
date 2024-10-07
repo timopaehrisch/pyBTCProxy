@@ -31,7 +31,6 @@ pyBTCProxy requires python3 to be installed. First, get the sourcecode and copy 
 ```
 git clone https://github.com/timopaehrisch/pyBTCProxy
 cd pyBTCProxy
-cp proxy-sample.conf proxy.conf
 ```
 
 We will run pyBTCProxy in a virtual environment:

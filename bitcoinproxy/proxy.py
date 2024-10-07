@@ -6,7 +6,6 @@ import time
 import os
 import configparser
 from aiohttp import web, BasicAuth
-#from bitcoinproxy.proxycontext import *
 from simplecontext.appcontext import *
 
 class BTCProxy:
@@ -176,8 +175,8 @@ class BTCProxy:
     async def taskRequestHandler(self, request):
         requestTask = asyncio.create_task(self._handle(request), name="Task#" + str(ctx.taskCounter))
         LOG.debug(f"{requestTask.get_name()}: Task created.")
-        ctx.taskCounter += 1
-        ctx.background_tasks.add(requestTask)
+        self.taskCounter += 1
+        self.background_tasks.add(requestTask)
         requestTask.add_done_callback(ctx.background_tasks.discard)
         if not requestTask.cancelled():
             if not requestTask.done():

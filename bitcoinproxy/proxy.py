@@ -3,14 +3,61 @@ import random
 import aiohttp
 import asyncio
 import time
+import os
+import configparser
 from aiohttp import web, BasicAuth
-from bitcoinproxy.proxycontext import *
+#from bitcoinproxy.proxycontext import *
+from simplecontext.appcontext import *
 
 class BTCProxy:
 
+    def __init__(self):
+        self.startTime = int(time.time())
+        self.background_tasks = set()
+        self.taskCounter = 0
+        self.requestCounter = 0
+        self.downloadBlockHashes = set()
+
+        main_base = os.path.dirname(__file__)
+        proxyconf_file = os.path.join(main_base, "proxy.conf")
+        LOG.info(f"Opening config file " + proxyconf_file)
+
+        _proxyconf = configparser.ConfigParser()
+        proxyconf_list = _proxyconf.read(proxyconf_file)
+        if (len(proxyconf_list) <1):
+            LOG.warn("WARN: No entries in config file " + proxyconf_file)
+        self.proxyconf = _proxyconf
+
+        # initialize statistics task
+        asyncio.run(self._runStatsTask())
+
+
+    async def _runStatsTask(self):
+        statisticsTask = asyncio.create_task(self.statsTask(), name="Statistics Task#{ctx.taskCounter}")
+        self.taskCounter += 1
+        self.background_tasks.add(statisticsTask)
+        statisticsTask.add_done_callback(self.background_tasks.discard)
+
+    async def statsTask(self):
+        while True:
+            if self.requestCounter != 0:
+                now = int(time.time())
+                d = divmod(now - self.startTime, 86400)
+                h = divmod(d[1], 3600)
+                m = divmod(h[1], 60)
+                s = m[1]
+                logStr = f"📊 Handled {self.requestCounter} requests in "
+                logStr += str('%d days, %d hours, %d minutes, %d seconds. ' % (d[0], h[0], m[0], s))
+                logStr += str(len(self.downloadBlockHashes)) + ' blocks were downloaded.'
+            else:
+                logStr = "No requests were forwarded so far."
+            LOG.info(logStr)
+ 
+            await asyncio.sleep(1800)
+
     async def handle_request(self, request):
         data = await request.text()
-        ctx.requestCounter += 1
+        self.requestCounter += 1
         request_json = json.loads(data)
         method = request_json.get('method', '')
         params = request_json.get('params', [])
@@ -18,8 +65,8 @@ class BTCProxy:
         if method != 'gettxout':
             LOG.info(f"-> Incoming request {method} {params}")
 
-        dest_user = ctx.getConfigValue('net','dest_user')
-        dest_pass = ctx.getConfigValue('net','dest_pass')
+        dest_user = self.getCfg('net','dest_user')
+        dest_pass = self.getCfg('net','dest_pass')
 
         if method == 'getblock':
             async with aiohttp.ClientSession(auth=BasicAuth(dest_user, dest_pass)) as session:
@@ -48,8 +95,8 @@ class BTCProxy:
             return web.Response(text=responseText, content_type='application/json')
 
     async def forward_request(self, session, method, params):
-        destipadress = ctx.getConfigValue('net','dest_ip')
-        destportnumber = ctx.getConfigValue('net','dest_port')
+        destipadress = self.getCfg('net','dest_ip')
+        destportnumber = self.getCfg('net','dest_port')
         url = f"http://{destipadress}:{destportnumber}"
         LOG.debug(f"Dest URL is {destipadress}:{destportnumber}")
 
@@ -117,8 +164,8 @@ class BTCProxy:
     async def _runWebApp(self):
         app = web.Application()
         app.router.add_post('/', self.taskRequestHandler)
-        ipadress = ctx.getConfigValue('net','listen_ip')
-        portnumber = ctx.getConfigValue('net', 'listen_port')
+        ipadress = self.getCfg('net','listen_ip')
+        portnumber = self.getCfg('net', 'listen_port')
         runner = web.AppRunner(app)
         await runner.setup()
         site = web.TCPSite(runner, ipadress, portnumber)
@@ -152,6 +199,15 @@ class BTCProxy:
     async def _handle(self, request):
             response = await self.handle_request(request)
             return response
+
+    def getCfg(self, sectionName, valueName):
+        if not sectionName in self.proxyconf:
+            print("BTCProxy WARN: No section '{sectionName} in configuration.' in configuration file found. Was the config file loaded?")
+            return None
+        if not valueName in self.proxyconf[sectionName]:
+            print("BTCProxy WARN: No parameter '{valueName} is configured in configuration.")
+            return None
+        return self.proxyconf[sectionName][valueName]
 
 
 if __name__ == "__main__":

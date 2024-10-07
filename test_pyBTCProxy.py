@@ -1,6 +1,6 @@
 from bitcoinproxy.proxy import BTCProxy
 
-print("Testing pyBTCProxy...")
+print("Starting pyBTCProxy...")
 
 if __name__ == "__main__":
     rpc_proxy = BTCProxy()

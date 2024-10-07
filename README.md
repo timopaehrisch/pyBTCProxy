@@ -26,7 +26,7 @@ pyBTCProxy addresses this issue by serving as a proxy application. It functions 
 
 ## Installation
 
-pyBTCProxy requires python3 to be installed. First, get the sourcecode and copy the provided example config file:
+pyBTCProxy requires python3 to be installed. First, let's get the source code:
 
 ```
 git clone https://github.com/timopaehrisch/pyBTCProxy
@@ -44,6 +44,7 @@ Then install the required dependencies:
 
 ```
 pip3 install -r requirements.txt
+pip3 install dist/simplecontext-0.0.34-py3-none-any.whl
 ```
 
 

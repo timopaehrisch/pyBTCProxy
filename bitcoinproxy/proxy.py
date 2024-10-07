@@ -5,54 +5,125 @@ import asyncio
 import time
 import os
 import configparser
+import threading
 from aiohttp import web, BasicAuth
 from simplecontext.appcontext import *
 
+startTime = int(time.time())
+background_tasks = set()
+taskCounter = 0
+requestCounter = 1
+downloadBlockHashes = set()
+proxyconf = None
+
+def start():
+    LOG.info("in start")
+
+    main_base = os.path.dirname(__file__)
+    proxyconf_file = os.path.join(main_base, "proxy.conf")
+    LOG.info(f"Opening config file " + proxyconf_file)
+
+    _proxyconf = configparser.ConfigParser()
+    proxyconf_list = _proxyconf.read(proxyconf_file)
+    if (len(proxyconf_list) <1):
+        LOG.error("WARN: No entries in config file " + proxyconf_file)
+    global proxyconf
+    proxyconf = _proxyconf
+
+
+    x = threading.Thread(target=run_server, args=(aiohttp_server(),))  
+    x.start()
+    y = threading.Thread(target=statistics)
+    y.start()
+
+def aiohttp_server():
+    app = web.Application()
+    app.router.add_post('/', taskRequestHandler)
+    runner = web.AppRunner(app)
+    return runner
+
+def run_server(runner):
+        LOG.info("in run_server()")
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(runner.setup())
+        ipadress = getCfg('net','listen_ip')
+        portnumber = getCfg('net', 'listen_port')
+
+        site = web.TCPSite(runner, ipadress, portnumber)
+        loop.run_until_complete(site.start())
+        LOG.info(f"Listening on {ipadress}:{portnumber}")
+        loop.run_forever()
+
+async def taskRequestHandler(self, request):
+    requestTask = asyncio.create_task(self._handle(request), name="Task#" + str(ctx.taskCounter))
+    LOG.debug(f"{requestTask.get_name()}: Task created.")
+    self.taskCounter += 1
+    self.background_tasks.add(requestTask)
+    requestTask.add_done_callback(ctx.background_tasks.discard)
+    if not requestTask.cancelled():
+        if not requestTask.done():
+            LOG.debug(f"{requestTask.get_name()}: Task is not done yet...awaiting...")
+            startTime = time.time()
+            await requestTask
+            stopTime = time.time()
+            LOG.debug(f"{requestTask.get_name()}: Task is done, execution took " + str(stopTime-startTime) + "ms.")
+
+        try:
+            response = requestTask.result()
+        except asyncio.InvalidStateError:
+            LOG.error(f"{requestTask.get_name()}: Task is in invalid state!")
+        except asyncio.CancelledError:
+            LOG.error(f"{requestTask.get_name()}: Task was cancelled!")
+        else:
+            return response
+            
+
+def statistics():
+        LOG.info("in statistics()")
+#        asyncio.run(self._runStatsTask())
+
+        statisticsTask = asyncio.create_task(statsTask(), name="Statistics Task#{self.taskCounter}")
+        taskCounter += 1
+        background_tasks.add(statisticsTask)
+        statisticsTask.add_done_callback(background_tasks.discard)
+
+def statsTask():
+    while True:
+        if requestCounter != 0:
+            now = int(time.time())
+            d = divmod(now - startTime, 86400)
+            h = divmod(d[1], 3600)
+            m = divmod(h[1], 60)
+            s = m[1]
+            logStr = f"📊 Handled {requestCounter} requests in "
+            logStr += str('%d days, %d hours, %d minutes, %d seconds. ' % (d[0], h[0], m[0], s))
+            logStr += str(len(downloadBlockHashes)) + ' blocks were downloaded.'
+            LOG.info(logStr)
+            time.sleep(10)
+        else:
+            logStr = "Stats: No requests were forwarded so far."
+            LOG.info(logStr)
+
+            time.sleep(5)
+
+def getCfg(sectionName, valueName):
+        if not sectionName in proxyconf:
+            print("BTCProxy WARN: No section '{sectionName} in configuration.' in configuration file found. Was the config file loaded?")
+            return None
+        if not valueName in proxyconf[sectionName]:
+            print("BTCProxy WARN: No parameter '{valueName} is configured in configuration.")
+            return None
+        return proxyconf[sectionName][valueName]
+
 class BTCProxy:
 
-    def __init__(self):
-        self.startTime = int(time.time())
-        self.background_tasks = set()
-        self.taskCounter = 0
-        self.requestCounter = 0
-        self.downloadBlockHashes = set()
+#    def __init__(self):
+#        LOG.info("in __init__")
+#        self.initialize()
 
-        main_base = os.path.dirname(__file__)
-        proxyconf_file = os.path.join(main_base, "proxy.conf")
-        LOG.info(f"Opening config file " + proxyconf_file)
-
-        _proxyconf = configparser.ConfigParser()
-        proxyconf_list = _proxyconf.read(proxyconf_file)
-        if (len(proxyconf_list) <1):
-            LOG.warn("WARN: No entries in config file " + proxyconf_file)
-        self.proxyconf = _proxyconf
-
-        # initialize statistics task
-        asyncio.run(self._runStatsTask())
-
-
-    async def _runStatsTask(self):
-        statisticsTask = asyncio.create_task(self.statsTask(), name="Statistics Task#{ctx.taskCounter}")
-        self.taskCounter += 1
-        self.background_tasks.add(statisticsTask)
-        statisticsTask.add_done_callback(self.background_tasks.discard)
-
-    async def statsTask(self):
-        while True:
-            if self.requestCounter != 0:
-                now = int(time.time())
-                d = divmod(now - self.startTime, 86400)
-                h = divmod(d[1], 3600)
-                m = divmod(h[1], 60)
-                s = m[1]
-                logStr = f"📊 Handled {self.requestCounter} requests in "
-                logStr += str('%d days, %d hours, %d minutes, %d seconds. ' % (d[0], h[0], m[0], s))
-                logStr += str(len(self.downloadBlockHashes)) + ' blocks were downloaded.'
-            else:
-                logStr = "No requests were forwarded so far."
-            LOG.info(logStr)
- 
-            await asyncio.sleep(1800)
+ #   def initialize(self):
+  #      LOG.info("in initialize")
 
     async def handle_request(self, request):
         data = await request.text()
@@ -157,20 +228,27 @@ class BTCProxy:
                     return getBlockResponse
 
 
-    def start(self):
-        asyncio.run(self._runWebApp())
 
-    async def _runWebApp(self):
-        app = web.Application()
-        app.router.add_post('/', self.taskRequestHandler)
-        ipadress = self.getCfg('net','listen_ip')
-        portnumber = self.getCfg('net', 'listen_port')
-        runner = web.AppRunner(app)
-        await runner.setup()
-        site = web.TCPSite(runner, ipadress, portnumber)
-        await site.start()
-        LOG.info(f"Listening on {ipadress}:{portnumber}")
-        await asyncio.Event().wait()  # Wait forever
+ 
+
+    
+#    def run_server(self):
+#        LOG.info("in interfaceThread")
+#        app = web.Application()
+#        app.router.add_post('/', self.taskRequestHandler)
+#        ipadress = self.getCfg('net','listen_ip')
+#        portnumber = self.getCfg('net', 'listen_port')
+#        runner = web.AppRunner(app)
+##        runner.setup()
+#        site = web.TCPSite(runner, ipadress, portnumber)
+#        site.start()
+#        LOG.info(f"Listening on {ipadress}:{portnumber}")
+
+ #       asyncio.Event().wait()  # Wait forever
+
+ 
+
+    
 
     async def taskRequestHandler(self, request):
         requestTask = asyncio.create_task(self._handle(request), name="Task#" + str(ctx.taskCounter))
@@ -199,16 +277,9 @@ class BTCProxy:
             response = await self.handle_request(request)
             return response
 
-    def getCfg(self, sectionName, valueName):
-        if not sectionName in self.proxyconf:
-            print("BTCProxy WARN: No section '{sectionName} in configuration.' in configuration file found. Was the config file loaded?")
-            return None
-        if not valueName in self.proxyconf[sectionName]:
-            print("BTCProxy WARN: No parameter '{valueName} is configured in configuration.")
-            return None
-        return self.proxyconf[sectionName][valueName]
+    
 
 
-if __name__ == "__main__":
-    rpc_proxy = BTCProxy()
-    rpc_proxy.start()
+#if __name__ == "__main__":
+#    rpc_proxy = BTCProxy()
+#    await rpc_proxy.start()

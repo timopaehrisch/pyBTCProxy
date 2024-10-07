@@ -3,6 +3,7 @@ dlblock.sh
 nodestats.py
 pyBTCProxy.py
 test_proxy.py
+.env
 .DS_Store
 .DS_Store?
 ._*
@@ -10,3 +11,4 @@ test_proxy.py
 .vscode
 .idea
 __pycache__
+env/

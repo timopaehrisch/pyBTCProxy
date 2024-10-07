@@ -26,27 +26,14 @@ pyBTCProxy addresses this issue by serving as a proxy application. It functions 
 
 ## Installation
 
-pyBTCProxy requires python3 to be installed. First, get the sourcecode and copy the provided example config file:
+It's just a script and a config file. You can clone the repository and utilize the provided sample configuration as follows:
 
 ```
-git clone https://github.com/timopaehrisch/pyBTCProxy
+git clone https://github.com/martinneustein/pyBTCProxy
 cd pyBTCProxy
 cp proxy-sample.conf proxy.conf
+pip3 install aiohttp configparser (TODO: Check if sufficient)
 ```
-
-We will run pyBTCProxy in a virtual environment:
-
-```
-python3 -m venv env
-source env/bin/activate
-```
-
-Then install the required dependencies:
-
-```
-pip3 install -r requirements.txt
-```
-
 
 When initiated, pyBTCProxy searches for a proxy.conf file within its current directory. It's essential to configure dest_user and dest_pass in this file, which correspond to the credentials required by bitcoind (available in the bitcoin.conf file of your bitcoind installation). All other configuration parameters are optional. If left unspecified, pyBTCProxy will listen on 127.0.0.1 port 8331 and connect to bitcoind on 127.0.0.1 port 8332, utilizing bitcoind's default values.
 

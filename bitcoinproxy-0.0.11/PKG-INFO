@@ -1,0 +1,4 @@
+Metadata-Version: 2.1
+Name: bitcoinproxy
+Version: 0.0.11
+Summary: A bitcoind proxy application that fetches pruned blocks

@@ -1,0 +1,12 @@
+MANIFEST.in
+README.md
+pyproject.toml
+setup.cfg
+simplecontext
+simplecontext/__init.py__
+simplecontext/appcontext.conf
+simplecontext/appcontext.py
+simplecontext.egg-info/PKG-INFO
+simplecontext.egg-info/SOURCES.txt
+simplecontext.egg-info/dependency_links.txt
+simplecontext.egg-info/top_level.txt

@@ -23,33 +23,38 @@ class BTCProxyContext:
     def initialize(self):
         # load config and/or set default values
         _conf = configparser.ConfigParser()
-        _conf.read('proxy.conf')
+        _conf.read('/Users/timopahrisch/Library/Python/3.11/lib/python/site-packages/bitcoinproxy/proxy.conf')
 
-        # Section [net]
-        if not isinstance(_conf['net']['listen_ip'], str):
+        if not 'net' in _conf:
+            print("WARN: No 'net' section in config values. Was the config file loaded?")
+            _conf['net'] = {}
+
+        if not 'listen_ip' in _conf['net']:
             _conf['net']['listen_ip'] = '127.0.0.1'
-        if not isinstance(_conf['net']['listen_port'], str):
+        if not 'listen_port' in _conf['net']:
             _conf['net']['listen_port'] = '8331'
-        if not isinstance(_conf['net']['dest_ip'], str):
+        if not 'dest_ip' in _conf['net']:
             _conf['net']['dest_ip'] = '127.0.0.1'
-        if not isinstance(_conf['net']['dest_port'], str):
+        if not 'dest_port' in _conf['net']:
             _conf['net']['dest_port'] = '8332'
-        if not isinstance(_conf['net']['dest_user'], str):
+        if not 'dest_user' in _conf['net']:
             print("You have to provide an RPC user in proxy.conf")
             exit
-        if not isinstance(_conf['net']['dest_pass'], str):
+        if not 'dest_pass' in _conf['net']:
             print("You have to provide an RPC password in proxy.conf")
             exit
 
-        logging.basicConfig(level=logging.INFO)
         logFormatter = logging.Formatter(fmt=' %(name)s %(message)s')
         consoleHandler = logging.StreamHandler()
         consoleHandler.setLevel(logging.INFO)
         consoleHandler.setFormatter(logFormatter)
         logger = logging.getLogger('pyBTCProxy')
 
-        if isinstance(_conf['app']['log_level'], str) and str(
-                _conf['app']['log_level']).lower() == 'debug':
+        if not 'app' in _conf:
+            _conf['app'] = {}
+
+        logging.basicConfig(level=logging.INFO)
+        if 'log_level' in _conf['app'] and str(_conf['app']['log_level']).lower() == 'debug':
             consoleHandler.setLevel(logging.DEBUG)
         logger.handlers.clear()
         logger.addHandler(consoleHandler)
@@ -58,7 +63,7 @@ class BTCProxyContext:
         # noisy aiohttp
         logging.getLogger('aiohttp').setLevel(logging.WARNING)
 
-        if not isinstance(_conf['app']['wait_for_download'], str):
+        if not 'wait_for_download' in _conf['app']:
             _conf['app']['wait_for_download'] = '0'
 
         self.config = _conf

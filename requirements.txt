@@ -1,0 +1,8 @@
+aiohttp==3.9.5
+aiosignal==1.3.1
+attrs==23.2.0
+frozenlist==1.4.1
+idna==3.7
+multidict==6.0.5
+simplecontext @ file:///Users/timopahrisch/Development/pyBTCProxy/dist/simplecontext-0.0.30-py3-none-any.whl#sha256=42379670392833a74d14ed28b9878b88edd59071c5c377fe25f98ba46d5969f5
+yarl==1.9.4

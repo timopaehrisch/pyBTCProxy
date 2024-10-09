@@ -4,5 +4,4 @@ attrs==23.2.0
 frozenlist==1.4.1
 idna==3.7
 multidict==6.0.5
-simplecontext @ file:///Users/timopahrisch/Development/pyBTCProxy/dist/simplecontext-0.0.34-py3-none-any.whl#sha256=7765a2a502e287745cc6ae635e39c975cab63b145e073ee6583094310f11b2fa
 yarl==1.9.4

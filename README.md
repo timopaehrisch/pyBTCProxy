@@ -43,8 +43,7 @@ source env/bin/activate
 Then install the required dependencies:
 
 ```
-pip3 install -r requirements.txt
-pip3 install dist/simplecontext-0.0.34-py3-none-any.whl
+python3 -m pip install -r requirements.txt
 ```
 
 

@@ -1,7 +1,2 @@
-aiohttp==3.9.5
-aiosignal==1.3.1
-attrs==23.2.0
-frozenlist==1.4.1
-idna==3.7
-multidict==6.0.5
-yarl==1.9.4
+Processing ./dist/simplecontext-0.0.35-py3-none-any.whl
+simplecontext is already installed with the same version as the provided wheel. Use --force-reinstall to force an installation of the wheel.

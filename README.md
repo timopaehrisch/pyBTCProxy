@@ -55,8 +55,6 @@ cp bitcoinproxy/proxy-sample.conf bitcoinproxy/proxy.conf
 nano bitcoinproxy/proxy.conf
 ```
 
-
-
 When initiated, pyBTCProxy searches for a proxy.conf file within the bitcoinproxy directory. It's essential to configure dest_user and dest_pass in this file, which correspond to the credentials required by bitcoind (available in the bitcoin.conf file of your bitcoind installation). All other configuration parameters are optional. If left unspecified, pyBTCProxy will listen on 127.0.0.1 port 8331 and connect to bitcoind on 127.0.0.1 port 8332, utilizing bitcoind's default values.
 
 ## Configuring your lightning daemon

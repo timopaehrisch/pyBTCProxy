@@ -81,8 +81,6 @@ async def taskRequestHandler(self, request):
 
 def statistics():
         LOG.info("in statistics()")
-#        asyncio.run(self._runStatsTask())
-
         statisticsTask = asyncio.create_task(statsTask(), name="Statistics Task#{self.taskCounter}")
         taskCounter += 1
         background_tasks.add(statisticsTask)
@@ -226,29 +224,6 @@ class BTCProxy:
                             time.sleep(self.waitForDownload)
                     getBlockResponse = await self.forward_request(session, 'getblock', [blockhash, 0])
                     return getBlockResponse
-
-
-
- 
-
-    
-#    def run_server(self):
-#        LOG.info("in interfaceThread")
-#        app = web.Application()
-#        app.router.add_post('/', self.taskRequestHandler)
-#        ipadress = self.getCfg('net','listen_ip')
-#        portnumber = self.getCfg('net', 'listen_port')
-#        runner = web.AppRunner(app)
-##        runner.setup()
-#        site = web.TCPSite(runner, ipadress, portnumber)
-#        site.start()
-#        LOG.info(f"Listening on {ipadress}:{portnumber}")
-
- #       asyncio.Event().wait()  # Wait forever
-
- 
-
-    
 
     async def taskRequestHandler(self, request):
         requestTask = asyncio.create_task(self._handle(request), name="Task#" + str(ctx.taskCounter))

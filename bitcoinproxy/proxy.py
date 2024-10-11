@@ -17,16 +17,16 @@ downloadBlockHashes = set()
 proxyconf = None
 
 def start():
-    LOG.info("in start")
-
     main_base = os.path.dirname(__file__)
     proxyconf_file = os.path.join(main_base, "proxy.conf")
     LOG.info(f"Opening config file " + proxyconf_file)
 
     _proxyconf = configparser.ConfigParser()
     proxyconf_list = _proxyconf.read(proxyconf_file)
+
     if (len(proxyconf_list) <1):
         LOG.error("WARN: No entries in config file " + proxyconf_file)
+        exit
     global proxyconf
     proxyconf = _proxyconf
 

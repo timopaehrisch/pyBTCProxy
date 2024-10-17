@@ -12,7 +12,7 @@ from simplecontext.appcontext import *
 startTime = int(time.time())
 background_tasks = set()
 taskCounter = 0
-requestCounter = 1
+requestCounter = 0
 downloadBlockHashes = set()
 proxyconf = None
 
@@ -98,12 +98,12 @@ def statsTask():
             logStr += str('%d days, %d hours, %d minutes, %d seconds. ' % (d[0], h[0], m[0], s))
             logStr += str(len(downloadBlockHashes)) + ' blocks were downloaded.'
             LOG.info(logStr)
-            time.sleep(10)
+            time.sleep(1800)
         else:
-            logStr = "Stats: No requests were forwarded so far."
+            logStr = "📊 No requests were forwarded so far."
             LOG.info(logStr)
 
-            time.sleep(5)
+            time.sleep(600)
 
 def getCfg(sectionName, valueName):
         if not sectionName in proxyconf:

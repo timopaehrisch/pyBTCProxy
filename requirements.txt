@@ -6,5 +6,4 @@ frozenlist==1.4.1
 idna==3.10
 multidict==6.1.0
 propcache==0.2.0
-simplecontext @ file:///Users/timopahrisch/Development/pyBTCProxy/dist/simplecontext-0.0.35-py3-none-any.whl#sha256=82b1b3466ed59f6f31d50b286b0084ab1d3a755c932190631651e13769930bd7
 yarl==1.14.0

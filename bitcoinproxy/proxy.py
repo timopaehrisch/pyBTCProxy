@@ -33,8 +33,10 @@ def start():
 
     x = threading.Thread(target=run_server, args=(aiohttp_server(),))  
     x.start()
+    x.join()
     y = threading.Thread(target=statistics)
     y.start()
+    y.join()
 
 def aiohttp_server():
     app = web.Application()

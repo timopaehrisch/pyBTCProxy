@@ -91,8 +91,7 @@ Description=pyBTCProxy Bitcoin RPC Proxy
 After=bitcoind.service
 
 [Service]
-WorkingDirectory=/path/to/pyBTCProxy
-ExecStart=env/bin/python3 startProxy.py
+ExecStart=/path/to/pybtcproxy/env/bin/python3 /path/to/pybtcproxy/startProxy.py
 
 User=bitcoin
 Group=bitcoin

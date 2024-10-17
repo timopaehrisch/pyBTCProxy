@@ -128,7 +128,7 @@ In this scenario, lightningd attempts to retrieve a block three times: The initi
 Occasionally pyBTCProxy prints out some stats to tell you it's alive:
 
 ```
-Handled 186959 requests in 7 days, 8 hours, 0 minutes, 23 seconds. 644 blocks were downloaded.```
+Handled 186959 requests in 7 days, 8 hours, 0 minutes, 23 seconds. 644 blocks were downloaded.
 ```
 
 The block download behaves very irregularly. Sometimes, nothing happens for days, then suddenly hundreds of blocks are downloaded in minutes.

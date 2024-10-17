@@ -92,7 +92,7 @@ After=bitcoind.service
 
 [Service]
 WorkingDirectory=/path/to/pyBTCProxy
-ExecStart=python3 /path/to/pyBTCProxy/startProxy.py
+ExecStart=env/bin/python3 startProxy.py
 
 User=bitcoin
 Group=bitcoin

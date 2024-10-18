@@ -21,6 +21,7 @@ class BTCProxy:
         self.requestCounter = 0
         self.downloadBlockHashes = set()
         self.proxyconf = None
+        self.session = None
 
     def start(self):
         #logging.basicConfig(filename='proxy.log', level=logging.DEBUG)
@@ -41,22 +42,41 @@ class BTCProxy:
         self.proxyconf = _proxyconf
 
 
+        LOG.debug("Testing outgoing connection to bitcoind...")
+
+ 
+#            return web.Response(text=responseText, content_type='application/json')
+    
         x = threading.Thread(target=self.run_server, args=(self.aiohttp_server(),))
         x.start()
+
+
     #   x.join()
         y = threading.Thread(target=self.statistics)
         y.start()
     #   y.join()
+        
+#        self.session = aiohttp.ClientSession(auth=BasicAuth(self.getCfg('net','dest_user'), self.getCfg('net','dest_pass')))
+
+
+#        with aiohttp.ClientSession(auth=BasicAuth(dest_user, dest_pass)) as session:
+#            try:
+#                response = self.forward_request(session, "getmempoolinfo", None)
+#            except Exception as e:
+#                LOG.error(f"Error connecting to bitcoind: {str(e)}")
+#                exit
+#                response = {'error': str(e)}
+#           responseText = response.text()
+        LOG.debug("Successfully connected to bitcoimd.")
 
     def aiohttp_server(self):
         app = web.Application()
         app.router.add_post('/', self.taskRequestHandler)
-#        app.make_handler(access_log=None, logger = logging)
         runner = web.AppRunner(app)
         return runner
 
     def run_server(self, runner):
-            LOG.info("Starting server...")
+            LOG.info("Starting proxy server...")
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             loop.run_until_complete(runner.setup())
@@ -65,7 +85,7 @@ class BTCProxy:
 
             site = web.TCPSite(runner, ipadress, portnumber)
             loop.run_until_complete(site.start())
-            LOG.info(f"Listening on {ipadress}:{portnumber}")
+            LOG.info(f"Proxy is Listening on {ipadress}:{portnumber}")
             loop.run_forever()
 
     async def taskRequestHandler(self, request):
@@ -177,7 +197,7 @@ class BTCProxy:
 
         async with session.post(url, json={"method": method, "params": params}) as response:
             data = await response.text()
-            LOG.debug(f"Response from forward_request: {method}: {data[:200]}...{data[-200:]}")
+            LOG.debug(f"Response for forwarded request: {method}: {data[:200]}...{data[-200:]}")
             return response
 
     async def handle_getblock_error(self, session, params, errorResponse):

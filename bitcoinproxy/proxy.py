@@ -41,34 +41,14 @@ class BTCProxy:
         
         self.proxyconf = _proxyconf
 
-
-        LOG.debug("Testing outgoing connection to bitcoind...")
-
- 
-#            return web.Response(text=responseText, content_type='application/json')
-    
-        x = threading.Thread(target=self.run_server, args=(self.aiohttp_server(),))
-        x.start()
-
-
+        serverThread = threading.Thread(target=self.run_server, args=(self.aiohttp_server(),))
+        serverThread.start()
     #   x.join()
-        y = threading.Thread(target=self.statistics)
-        y.start()
+
+        statisticThread = threading.Thread(target=self.statistics)
+        statisticThread.start()
     #   y.join()
         
-#        self.session = aiohttp.ClientSession(auth=BasicAuth(self.getCfg('net','dest_user'), self.getCfg('net','dest_pass')))
-
-
-#        with aiohttp.ClientSession(auth=BasicAuth(dest_user, dest_pass)) as session:
-#            try:
-#                response = self.forward_request(session, "getmempoolinfo", None)
-#            except Exception as e:
-#                LOG.error(f"Error connecting to bitcoind: {str(e)}")
-#                exit
-#                response = {'error': str(e)}
-#           responseText = response.text()
-        LOG.debug("Successfully connected to bitcoimd.")
-
     def aiohttp_server(self):
         app = web.Application()
         app.router.add_post('/', self.taskRequestHandler)
@@ -131,12 +111,12 @@ class BTCProxy:
                 logStr += str('%d days, %d hours, %d minutes, %d seconds. ' % (d[0], h[0], m[0], s))
                 logStr += str(len(self.downloadBlockHashes)) + ' blocks were downloaded.'
                 LOG.info(logStr)
-                time.sleep(10)
+                time.sleep(1800)
             else:
                 logStr = "📊 No requests were forwarded so far."
                 LOG.info(logStr)
 
-                time.sleep(10)
+                time.sleep(180)
 
     def getCfg(self, sectionName, valueName):
             if not sectionName in self.proxyconf:
@@ -162,11 +142,11 @@ class BTCProxy:
         dest_user = self.getCfg('net','dest_user')
         dest_pass = self.getCfg('net','dest_pass')
 
-        if method == 'getblock':
-            async with aiohttp.ClientSession(auth=BasicAuth(dest_user, dest_pass)) as session:
+        async with aiohttp.ClientSession(auth=BasicAuth(dest_user, dest_pass)) as self.session:
+            if method == 'getblock':
                 fakeParams = [params[0], params[1]]
                 try:
-                    response = await self.forward_request(session, method, fakeParams)
+                    response = await self.forward_request(self.session, method, fakeParams)
                 except Exception as e:
                     LOG.error(f"Error forwarding getblock request: {str(e)}")
                     response = {'error': str(e)}
@@ -175,18 +155,17 @@ class BTCProxy:
                 dictResponse = json.loads(responseText)
                 if 'error' in dictResponse and dictResponse['error'] != None:
                     LOG.debug(f"Cannot retrieve block from bitcoind: {dictResponse}")
-                    getBlockErrorResponse = await self.handle_getblock_error(session, fakeParams, response)
+                    getBlockErrorResponse = await self.handle_getblock_error(self.session, fakeParams, response)
                     responseText = await getBlockErrorResponse.text()
                 return web.Response(text=responseText, content_type='application/json')
-
-        async with aiohttp.ClientSession(auth=BasicAuth(dest_user, dest_pass)) as session:
-            try:
-                response = await self.forward_request(session, method, params)
-            except Exception as e:
-                LOG.error(f"Error forwarding generic request: {str(e)}")
-                response = {'error': str(e)}
-            responseText = await response.text()
-            return web.Response(text=responseText, content_type='application/json')
+            else:
+                try:
+                    response = await self.forward_request(self.session, method, params)
+                except Exception as e:
+                    LOG.error(f"Error forwarding generic request: {str(e)}")
+#                    response = {'error': str(e)}
+                responseText = await response.text()
+                return web.Response(text=responseText, content_type='application/json')
 
     async def forward_request(self, session, method, params):
         destipadress = self.getCfg('net','dest_ip')

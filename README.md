@@ -44,7 +44,6 @@ Then install the required dependencies:
 
 ```
 python3 -m pip install -r requirements.txt
-python3 -m pip install dist/simplecontext-*-py3-none-any.whl
 ```
 
 ## Configuration

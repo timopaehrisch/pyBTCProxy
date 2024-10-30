@@ -8,20 +8,20 @@ import configparser
 import threading
 import logging
 from aiohttp import web, BasicAuth
-#from simplecontext.appcontext import *
 
 LOG = logging.getLogger(__name__)
 
 class BTCProxy:
 
-    def __init__(self):
+    def __init__(self, configFile = 'proxy.conf'):
         self.startTime = int(time.time())
         self.background_tasks = set()
         self.taskCounter = 0
         self.requestCounter = 0
         self.downloadBlockHashes = set()
-        self.proxyconf = None
+        self.conf = None
         self.session = None
+        self.configFile = configFile
 
     def start(self):
         #logging.basicConfig(filename='proxy.log', level=logging.DEBUG)
@@ -29,17 +29,21 @@ class BTCProxy:
 
         LOG.debug('start()')
         main_base = os.path.dirname(__file__)
-        proxyconf_file = os.path.join(main_base, "proxy.conf")
-        LOG.debug(f"Opening config file " + proxyconf_file)
+        configFileFullPath = os.path.join(main_base, self.configFile)
+        LOG.info(f"Using config file " + configFileFullPath)
 
-        _proxyconf = configparser.ConfigParser()
-        proxyconf_list = _proxyconf.read(proxyconf_file)
-
-        if (len(proxyconf_list) <1):
-            LOG.error("WARN: No entries in config file " + proxyconf_file)
-            exit
-        
-        self.proxyconf = _proxyconf
+        parser = configparser.ConfigParser()
+        if not parser.read(configFileFullPath):
+            raise FileNotFoundError(f"Config file not found ({configFileFullPath})")
+        else:
+            parser.read(configFileFullPath)
+#            for section_name in parser.sections():
+#                print('Section:', section_name)
+#                print('  Options:', parser.options(section_name))
+#            for name, value in parser.items(section_name):
+#                print('  %s = %s' % (name, value))
+#            print   
+            self.conf = parser
 
         serverThread = threading.Thread(target=self.run_server, args=(self.aiohttp_server(),))
         serverThread.start()
@@ -119,13 +123,16 @@ class BTCProxy:
                 time.sleep(180)
 
     def getCfg(self, sectionName, valueName):
-            if not sectionName in self.proxyconf:
-                print("BTCProxy WARN: No section '{sectionName} in configuration.' in configuration file found. Was the config file loaded?")
+            if not self.conf:
+                LOG.error("No configuration is set.")
                 return None
-            if not valueName in self.proxyconf[sectionName]:
-                print("BTCProxy WARN: No parameter '{valueName} is configured in configuration.")
+            if not sectionName in self.conf:
+                LOG.error(f"No section with name {sectionName} found in configuration.")
                 return None
-            return self.proxyconf[sectionName][valueName]
+            if not valueName in self.conf[sectionName]:
+                LOG.error(f"No value with name '{valueName} found in configuration.")
+                return None
+            return self.conf[sectionName][valueName]
 
 
 

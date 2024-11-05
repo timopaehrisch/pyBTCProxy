@@ -125,7 +125,7 @@ class BTCProxy:
 
     def getCfg(self, sectionName, valueName):
             if not self.conf:
-                LOG.error("No configuration is set.")
+                LOG.info("Configuration has not been properly initiated.")
                 return None
             if not sectionName in self.conf:
                 LOG.error(f"No section with name {sectionName} found in configuration.")
@@ -266,27 +266,6 @@ class BTCProxy:
             response = await self.handle_request(request)
             return response
 
-class Client:
-    def __init__(self) -> None:
-        self._session = aiohttp.ClientSession()
-
-    async def __aenter__(self):
-        return self
-
-    async def __aexit__(self, *args, **kwargs):
-        await self.close()
-
-    async def get_data1(self, url):
-        async with self._session.get(url) as r:
-            return await r.json()
-
-    async def get_data2(self, url):
-        async with self._session.get(url) as r:
-            return await r.json()
-
-    async def close(self) -> None:
-        if not self._session.closed:
-            await self._session.close()
     
 def main():
     proxy = BTCProxy()

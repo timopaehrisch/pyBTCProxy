@@ -22,6 +22,7 @@ class BTCProxy:
         self.conf = None
         self.session = None
         self.configFile = configFile
+        self.waitForDownload = 0
 
     def start(self):
         #logging.basicConfig(filename='proxy.log', level=logging.DEBUG)
@@ -151,9 +152,10 @@ class BTCProxy:
 
         async with aiohttp.ClientSession(auth=BasicAuth(dest_user, dest_pass)) as self.session:
             if method == 'getblock':
-                fakeParams = [params[0], params[1]]
+                LOG.info("FAKE1 " + params[0] + " FAKE2 " + params[1])
+                callParams = [params[1]]
                 try:
-                    response = await self.forward_request(self.session, method, fakeParams)
+                    response = await self.forward_request(self.session, method, callParams)
                 except Exception as e:
                     LOG.error(f"Error forwarding getblock request: {str(e)}")
                     response = {'error': str(e)}
@@ -161,8 +163,8 @@ class BTCProxy:
                 responseText = await response.text()
                 dictResponse = json.loads(responseText)
                 if 'error' in dictResponse and dictResponse['error'] != None:
-                    LOG.debug(f"Cannot retrieve block from bitcoind: {dictResponse}")
-                    getBlockErrorResponse = await self.handle_getblock_error(self.session, fakeParams, response)
+                    LOG.info(f"Cannot retrieve block from bitcoind: {dictResponse}")
+                    getBlockErrorResponse = await self.handle_getblock_error(self.session, callParams, response)
                     responseText = await getBlockErrorResponse.text()
                 return web.Response(text=responseText, content_type='application/json')
             else:
@@ -264,6 +266,27 @@ class BTCProxy:
             response = await self.handle_request(request)
             return response
 
+class Client:
+    def __init__(self) -> None:
+        self._session = aiohttp.ClientSession()
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *args, **kwargs):
+        await self.close()
+
+    async def get_data1(self, url):
+        async with self._session.get(url) as r:
+            return await r.json()
+
+    async def get_data2(self, url):
+        async with self._session.get(url) as r:
+            return await r.json()
+
+    async def close(self) -> None:
+        if not self._session.closed:
+            await self._session.close()
     
 def main():
     proxy = BTCProxy()

@@ -1,6 +1,7 @@
 import pytest
 import json
 import asyncio
+import random
 from typing import Dict
 from unittest.mock import patch, mock_open
 from aioresponses import aioresponses
@@ -8,7 +9,7 @@ import aiohttp
 from aiohttp.web_exceptions import HTTPInternalServerError
 from aiohttp import web
 from unittest.mock import patch, MagicMock
-from bitcoinproxy.proxy import BTCProxy
+from bitcoinproxy.proxy import BTCProxy, Client
 
 @pytest.fixture
 def btc_proxy():
@@ -65,4 +66,77 @@ def test_getCfg_invalid():
     proxy = BTCProxy()
     proxy.conf = {}
     assert proxy.getCfg('net', 'listen_ip') is None
+
+
+
+
+# Concurrency test for simultaneous requests
+@pytest.mark.asyncio
+async def test_concurrent_requests():
+    proxy = BTCProxy()
+    proxy.conf = {
+        'net': {
+            'listen_ip': '127.0.0.1',
+            'listen_port': '8080',
+            'dest_ip': '127.0.0.1',
+            'dest_port': '8331',
+            'dest_user': 'user',
+            'dest_pass': 'password'
+        }, 
+        'app': {
+            'waitForDownload': '10'
+        }
+    }
+
+    async with aiohttp.ClientSession() as session:
+        async def make_request():
+            # determine random block hash
+            randomBlock = random.randrange(1, 300000, 3)
+            async with session.post('http://192.168.150.117:8331', json={"method": "getblockhash", "params": [randomBlock]}) as responseBlock:
+                dataBlock = await responseBlock.json()
+                assert 'result' in dataBlock
+                randomBlockHash = dataBlock['result']
+#                return dataBlock
+
+
+            async with session.post('http://192.168.150.117:8331', json={"method": "getblock", "params": ["blockhash", randomBlockHash]}) as response:
+                assert response.status == 200
+                data = await response.json()
+                return data
+
+        # Simulate multiple concurrent requests
+        tasks = [make_request() for _ in range(5)]
+        results = await asyncio.gather(*tasks)
+        
+        for result in results:
+            assert 'error' in result  # Check that no request results in an error
+            print(f"XXXXXXXXXXXXXXX error in result is " + str(result['error']))
+            assert result['error'] is None
+
+@pytest.mark.asyncio
+async def test_task_request_handler_concurrent():
+    proxy = BTCProxy()
+    proxy.conf = {
+        'net': {
+            'listen_ip': '127.0.0.1',
+            'listen_port': '8080',
+            'dest_ip': '127.0.0.1',
+            'dest_port': '8332',
+            'dest_user': 'user',
+            'dest_pass': 'password'
+        }
+    }
+
+    with patch.object(proxy, 'handle_request', return_value={'result': 'success'}) as mock_handle_request:
+        async def create_request():
+            request_data = {"method": "gettxout", "params": []}
+            response = await proxy.taskRequestHandler(request_data)
+            return response
+
+        tasks = [create_request() for _ in range(10)]
+        results = await asyncio.gather(*tasks)
+
+        # Verify all tasks return the expected result
+        for result in results:
+            assert result['result'] == 'success'
 

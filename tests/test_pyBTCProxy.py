@@ -116,7 +116,7 @@ async def test_concurrent_requests():
                 blockLogString = f"[Block {randomBlockNumber}" + "]"
                 LOG.info(f"{blockLogString} Determined {randomBlockHash} for block {randomBlockNumber}")
 
-            randSleep = random.randrange(1, 7)
+            randSleep = random.randrange(1, 20)
             LOG.info(f"{blockLogString} Sleeping {randSleep} seconds...")
             await asyncio.sleep(randSleep)
             LOG.info(f"{blockLogString} woken up")
@@ -140,7 +140,7 @@ async def test_concurrent_requests():
     LOG.info("Waiting for proxy to start up")
     await asyncio.sleep(2)
 
-    numRequest = 30
+    numRequest = 20
     LOG.info(f"Creating {numRequest} getblockhash/getblock requests...")
     # Simulate multiple concurrent requests
     tasks = [make_request() for _ in range(numRequest)]

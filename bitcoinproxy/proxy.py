@@ -148,8 +148,10 @@ class BTCProxy:
 
         if method != 'gettxout':
             LOG.info(f"-> Incoming request {method} {params}")
-#        async with aiohttp.ClientSession(auth=BasicAuth(dest_user, dest_pass)) as self.session:
-        async with self.createSession() as session:
+        dest_user = self.getCfg('net','dest_user')
+        dest_pass = self.getCfg('net','dest_pass')
+        async with aiohttp.ClientSession(auth=BasicAuth(dest_user, dest_pass)) as session:
+#        async with self.createSession() as session:
             if method == 'getblock':
                 callParams = [params[0]]
                 try:

@@ -161,7 +161,8 @@ class BTCProxy:
                     response = {'error': str(e)}
 
                 responseText = await response.text()
-                dictResponse = json.loads(responseText)
+#                dictResponse = json.loads(responseText)
+                dictResponse = await response.json()
                 if 'error' in dictResponse and dictResponse['error'] != None:
 #                    LOG.info(f"Cannot retrieve block from bitcoind: {dictResponse}")
                     getBlockErrorResponse = await self.handle_getblock_error(session, callParams, response)

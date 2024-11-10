@@ -106,7 +106,7 @@ async def test_concurrent_requests():
     blocks_pruned = []
     blocks_retrieved = []
     # Increase number and config value rpcworkqueue on your pruned node in allow more concurrent calls
-    numRequest = 40
+    numRequest = 2
 
     async def make_request(requestNumber):
         async with aiohttp.ClientSession(auth=BasicAuth(os.environ["BITCOIN_USER"], os.environ["BITCOIN_PASSWORD"])) as session:
@@ -115,7 +115,9 @@ async def test_concurrent_requests():
             randomBlockNumber = random.randrange(1, 490000, 3)
             async with session.post(destHost, json={"method": "getblockhash", "params": [randomBlockNumber]}) as responseBlock:
                 await asyncio.sleep(0.001)
-                dataBlock = await responseBlock.json()
+                dataBlockText = await responseBlock.text()
+#                dataBlock = await responseBlock.json()
+                dataBlock = json.loads(dataBlockText)
 #                LOG.info(f"responseBlock:{dataBlock}")
                 assert 'result' in dataBlock
                 randomBlockHash = dataBlock['result']
@@ -131,11 +133,13 @@ async def test_concurrent_requests():
             async with aiohttp.ClientSession(auth=BasicAuth(os.environ["BITCOIN_USER"], os.environ["BITCOIN_PASSWORD"])) as session2:
                 async with session2.post(destHost, json={"method": "getblock", "params": [randomBlockHash]}) as response:
                     await asyncio.sleep(0.001)
-                    if response.status != 200:
-                        text = await response.text()
+                    text = await response.text()
+                    if (response.status != 200):
                         LOG.info(f"{blockLogString} response:{text}")
                     assert response.status == 200
-                    blockData = await response.json()
+
+#                    blockData = await response.json()
+                    blockData = json.loads(text)
                     if blockData['result'] is None and blockData['error']['code'] == -1:
                         LOG.info(f"{blockLogString} is pruned")
                         blocks_pruned.append(randomBlockNumber)

@@ -168,11 +168,11 @@ class BTCProxy:
             else:
                 try:
                     response = await self.forward_request(session, method, params)
+                    responseText = await response.text()
+                    return web.Response(text=responseText, content_type='application/json')
                 except Exception as e:
                     LOG.error(f"Error forwarding generic request: {str(e)}")
     #                    response = {'error': str(e)}
-                responseText = await response.text()
-                return web.Response(text=responseText, content_type='application/json')
 
     async def forward_request(self, session, method, params):
         destipadress = self.getCfg('net','dest_ip')

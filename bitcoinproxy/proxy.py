@@ -168,17 +168,17 @@ class BTCProxy:
             else:
                 try:
                     response = await self.forward_request(session, method, params)
-                    responseText = await response.text()
-                    return web.Response(text=responseText, content_type='text/html')
                 except Exception as e:
                     LOG.error(f"Error forwarding generic request: {str(e)}")
     #                    response = {'error': str(e)}
+                responseText = await response.text()
+                return web.Response(text=responseText, content_type='application/json')
 
     async def forward_request(self, session, method, params):
         destipadress = self.getCfg('net','dest_ip')
         destportnumber = self.getCfg('net','dest_port')
         url = f"http://{destipadress}:{destportnumber}"
-        LOG.debug(f"Dest URL is {destipadress}:{destportnumber}")
+        LOG.info(f"Dest URL is {destipadress}:{destportnumber}")
 
         async with session.post(url, json={"method": method, "params": params}) as response:
             resp_json = await response.json()

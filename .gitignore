@@ -3,6 +3,7 @@ dlblock.sh
 nodestats.py
 pyBTCProxy.py
 test_proxy.py
+pytest.ini
 .env
 .DS_Store
 .DS_Store?
@@ -12,4 +13,3 @@ test_proxy.py
 .idea
 __pycache__
 env/
-#pytest.ini

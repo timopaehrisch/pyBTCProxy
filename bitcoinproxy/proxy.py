@@ -172,8 +172,9 @@ class BTCProxy:
                     response = await self.forward_request(session, method, params)
                 except Exception as e:
                     LOG.error(f"Error forwarding generic request: {str(e)}")
-                responseText = await response.text().replace("\n", "")
-                return web.Response(text=responseText, content_type='application/json')
+                responseText = await response.text()
+                cleanResponseText = str(responseText).replace("\n", "")
+                return web.Response(text=cleanResponseText, content_type='application/json')
     #                    response = {'error': str(e)}
  
     async def forward_request(self, session, method, params):

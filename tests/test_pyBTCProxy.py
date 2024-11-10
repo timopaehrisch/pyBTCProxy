@@ -10,7 +10,7 @@ from unittest.mock import patch, mock_open
 from aioresponses import aioresponses
 import aiohttp
 from aiohttp.web_exceptions import HTTPInternalServerError
-from aiohttp import web
+from aiohttp import web, BasicAuth
 from unittest.mock import patch, MagicMock
 from bitcoinproxy.proxy import BTCProxy
 
@@ -89,44 +89,46 @@ async def test_concurrent_requests():
     proxy = BTCProxy()
     proxy.conf = {
         'net': {
-            'listen_ip': '192.168.150.117',
-            'listen_port': '8080',
+            'listen_ip': os.environ["LISTEN_IP"],
+            'listen_port': os.environ["LISTEN_PORT"],
             'dest_ip': os.environ["PRUNED_HOST"],
             'dest_port': os.environ["PRUNED_PORT"],
             'dest_user': os.environ["BITCOIN_USER"],
             'dest_pass': os.environ["BITCOIN_PASSWORD"]
         }, 
         'app': {
-            'wait_for_download': 20
+            'wait_for_download': 5
         }
     }
     
     proxy.start()
 
-    async def make_request():
-        async with aiohttp.ClientSession() as session:
+    async def make_request(requestNumber):
+        async with aiohttp.ClientSession(auth=BasicAuth(os.environ["BITCOIN_USER"], os.environ["BITCOIN_PASSWORD"])) as session:
             # determine random block hash
-            randomBlockNumber = random.randrange(1, 300000, 3)
-            async with session.post("http://10.0.0.3:8330", json={"method": "getblockhash", "params": [randomBlockNumber]}) as responseBlock:
+            destHost = "http://" + os.environ["LISTEN_IP"] + ":" + os.environ["LISTEN_PORT"]
+            randomBlockNumber = random.randrange(1, 10000, 3)
+            async with session.post(destHost, json={"method": "getblockhash", "params": [randomBlockNumber]}) as responseBlock:
                 await asyncio.sleep(0.001)
-#                LOG.info(f"responseBlock:{text}")
                 dataBlock = await responseBlock.json()
+                LOG.info(f"responseBlock:{dataBlock}")
                 assert 'result' in dataBlock
                 randomBlockHash = dataBlock['result']
-                blockLogString = f"[Block {randomBlockNumber}" + "]"
-                LOG.info(f"{blockLogString} Determined {randomBlockHash} for block {randomBlockNumber}")
-
-            randSleep = random.randrange(1, 20)
-            LOG.info(f"{blockLogString} Sleeping {randSleep} seconds...")
-            await asyncio.sleep(randSleep)
-            LOG.info(f"{blockLogString} woken up")
+                blockLogString = f"[{requestNumber}][Block {randomBlockNumber}" + "]"
+                randSleep = random.randrange(1, 5)
+                LOG.info(f"{blockLogString} Determined {randomBlockHash} for block {randomBlockNumber}, sleeping {randSleep} seconds.")
+#                await session.close()
             
-            async with aiohttp.ClientSession() as session2:
-                async with session2.post("http://10.0.0.3:8330", json={"method": "getblock", "params": [randomBlockHash]}) as response:
+#            LOG.info(f"{blockLogString} Sleeping {randSleep} seconds...")
+            await asyncio.sleep(randSleep)
+#            LOG.info(f"{blockLogString} woken up")
+            
+            async with aiohttp.ClientSession(auth=BasicAuth(os.environ["BITCOIN_USER"], os.environ["BITCOIN_PASSWORD"])) as session2:
+                async with session2.post(destHost, json={"method": "getblock", "params": [randomBlockHash]}) as response:
                     await asyncio.sleep(0.001)
                     if response.status != 200:
                         text = await response.text()
-                        LOG.info(f"response:{text}")
+                        LOG.info(f"{blockLogString} response:{text}")
                     assert response.status == 200
                     blockData = await response.json()
                     if blockData['result'] is None and blockData['error']['code'] == -1:
@@ -134,24 +136,28 @@ async def test_concurrent_requests():
                     else:
                         dataSize = len(blockData['result'])
                         LOG.info(f"{blockLogString} Retrieved block with size {dataSize}")
+#                    await session2.close()
                     return blockData
             
     # wait for proxy to start up
-    LOG.info("Waiting for proxy to start up")
     await asyncio.sleep(2)
 
+    # Increase number and config value rpcworkqueue on your pruned node in allow more concurrent calls
     numRequest = 20
     LOG.info(f"Creating {numRequest} getblockhash/getblock requests...")
     # Simulate multiple concurrent requests
-    tasks = [make_request() for _ in range(numRequest)]
+#    tasks = [make_request() for _ in range(numRequest)]
+    tasks = []
+    for reqNo in range(numRequest):
+        tasks.append(make_request(reqNo))
     LOG.info("getblockhash/getblock requests created. Now Executing.")
 
     results = await asyncio.gather(*tasks)
     LOG.info(f"getblockhash/getblock request tasks have been gathered.")
 
-#    for result in results:
-#        if 'error' in results:
-#            LOG.info(f"error in result is " + str(result['error']))
+    for result in results:
+        if 'error' in results:
+            LOG.info(f"error in result is " + str(result['error']))
 
 #            assert 'error' in result  # Check that no request results in an error
 #            assert result['error'] is None

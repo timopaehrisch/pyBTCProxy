@@ -20,7 +20,7 @@ class BTCProxy:
         self.requestCounter = 0
         self.downloadBlockHashes = set()
         self.conf = None
-        self.session = None
+#        self.session = None
         self.configFile = configFile
         logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
 
@@ -132,7 +132,11 @@ class BTCProxy:
                 return None
             return self.conf[sectionName][valueName]
 
-
+    def createSession(self):
+        dest_user = self.getCfg('net','dest_user')
+        dest_pass = self.getCfg('net','dest_pass')
+        session = aiohttp.ClientSession(auth=BasicAuth(dest_user, dest_pass))
+        return session
 
     async def handle_request(self, request):
         data = await request.text()
@@ -143,15 +147,12 @@ class BTCProxy:
 
         if method != 'gettxout':
             LOG.info(f"-> Incoming request {method} {params}")
-
-        dest_user = self.getCfg('net','dest_user')
-        dest_pass = self.getCfg('net','dest_pass')
-
-        async with aiohttp.ClientSession(auth=BasicAuth(dest_user, dest_pass)) as self.session:
+#        async with aiohttp.ClientSession(auth=BasicAuth(dest_user, dest_pass)) as self.session:
+        async with self.createSession() as session:
             if method == 'getblock':
                 callParams = [params[0]]
                 try:
-                    response = await self.forward_request(self.session, method, callParams)
+                    response = await self.forward_request(session, method, callParams)
                 except Exception as e:
                     LOG.error(f"Error forwarding getblock request: {str(e)}")
                     response = {'error': str(e)}
@@ -160,15 +161,15 @@ class BTCProxy:
                 dictResponse = json.loads(responseText)
                 if 'error' in dictResponse and dictResponse['error'] != None:
                     LOG.info(f"Cannot retrieve block from bitcoind: {dictResponse}")
-                    getBlockErrorResponse = await self.handle_getblock_error(self.session, callParams, response)
+                    getBlockErrorResponse = await self.handle_getblock_error(session, callParams, response)
                     responseText = await getBlockErrorResponse.text()
                 return web.Response(text=responseText, content_type='application/json')
             else:
                 try:
-                    response = await self.forward_request(self.session, method, params)
+                    response = await self.forward_request(session, method, params)
                 except Exception as e:
                     LOG.error(f"Error forwarding generic request: {str(e)}")
-#                    response = {'error': str(e)}
+    #                    response = {'error': str(e)}
                 responseText = await response.text()
                 return web.Response(text=responseText, content_type='application/json')
 
@@ -177,7 +178,6 @@ class BTCProxy:
         destportnumber = self.getCfg('net','dest_port')
         url = f"http://{destipadress}:{destportnumber}"
         LOG.debug(f"Dest URL is {destipadress}:{destportnumber}")
-
 
         async with session.post(url, json={"method": method, "params": params}) as response:
             resp_json = await response.json()

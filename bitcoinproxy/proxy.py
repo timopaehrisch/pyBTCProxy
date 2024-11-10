@@ -229,7 +229,7 @@ class BTCProxy:
                         self.downloadBlockHashes.add(blockhash)
 
                         if self.getCfg('app','wait_for_download'):
-                            LOG.info(f"Waiting {self.waitForDownload}s for download...")
+                            LOG.info(f"Waiting {self.waitForDownload}s for download block.")
                             await asyncio.sleep(self.waitForDownload)
                             LOG.info(f"Woke up!")
                     # retry getblock and just forward result. If we slept above, the block might have been downloaded in the meantime.

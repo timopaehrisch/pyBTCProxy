@@ -147,7 +147,7 @@ class BTCProxy:
 
         async with aiohttp.ClientSession(auth=BasicAuth(dest_user, dest_pass)) as self.session:
             if method == 'getblock':
-                callParams = [params[1]]
+                callParams = [params[0]]
                 try:
                     response = await self.forward_request(self.session, method, callParams)
                 except Exception as e:

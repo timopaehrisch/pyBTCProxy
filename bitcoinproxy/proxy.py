@@ -228,7 +228,7 @@ class BTCProxy:
                             f"🧈 Block ...{blockhash[30:]}: download initiated via peer id {peer_id} / {peer_addr}")
                         self.downloadBlockHashes.add(blockhash)
 
-                        if self.waitForDownload:
+                        if self.getCfg('app','wait_for_download'):
                             LOG.info(f"Waiting {self.waitForDownload}s for download...")
                             await asyncio.sleep(self.waitForDownload)
                             LOG.info(f"Woke up!")

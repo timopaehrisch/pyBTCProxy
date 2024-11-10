@@ -235,10 +235,11 @@ class BTCProxy:
                     # retry getblock and just forward result. If we slept above, the block might have been downloaded in the meantime.
                     LOG.info(f"🧈 Retrying getblock call for block hash {blockhash}")
                     getBlockResponse = await self.forward_request(session, 'getblock', [blockhash, 0])
-#                    responseText = await getBlockResponse.text()
-#                    dictResponse = json.loads(responseText)
-#                    if 'hex' in dictResponse:
-#                        LOG.info(f"🧈 Block ...{blockhash[30:]} has been downloaded.")
+                    
+                    responseText = await getBlockResponse.text()
+                    dictRetry = json.loads(responseText)
+                    if 'hex' in dictRetry:
+                        LOG.info(f"🧈 Block ...{blockhash[30:]} has been downloaded.")
                     return getBlockResponse
 
     async def taskRequestHandler(self, request):

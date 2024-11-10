@@ -178,12 +178,12 @@ class BTCProxy:
         destipadress = self.getCfg('net','dest_ip')
         destportnumber = self.getCfg('net','dest_port')
         url = f"http://{destipadress}:{destportnumber}"
-        LOG.info(f"Dest URL is {destipadress}:{destportnumber}")
+#        LOG.info(f"Dest URL is {destipadress}:{destportnumber}")
 
         async with session.post(url, json={"method": method, "params": params}) as response:
 #            resp_json = await response.json()
             data = await response.text()
-            LOG.info(f"Response for forwarded request: {method}: {data[:200]}...{data[-200:]}")
+            LOG.debug(f"Response for forwarded request: {method}: {data[:200]}...{data[-200:]}")
             return response
 
     async def handle_getblock_error(self, session, params, errorResponse):

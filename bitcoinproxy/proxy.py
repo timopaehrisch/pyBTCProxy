@@ -11,6 +11,7 @@ from aiohttp import web, BasicAuth
 
 logging.basicConfig(format='%(asctime)s %(levelname)s [pyBTC] %(message)s', level=logging.INFO)
 LOG = logging.getLogger(__name__)
+logging.getLogger('aiohttp.access').setLevel(logging.WARNING)
 
 class BTCProxy:
 
@@ -160,7 +161,7 @@ class BTCProxy:
                 responseText = await response.text()
                 dictResponse = json.loads(responseText)
                 if 'error' in dictResponse and dictResponse['error'] != None:
-                    LOG.info(f"Cannot retrieve block from bitcoind: {dictResponse}")
+#                    LOG.info(f"Cannot retrieve block from bitcoind: {dictResponse}")
                     getBlockErrorResponse = await self.handle_getblock_error(session, callParams, response)
                     responseText = await getBlockErrorResponse.text()
                 return web.Response(text=responseText, content_type='application/json')
@@ -242,7 +243,7 @@ class BTCProxy:
                     responseText = await getBlockResponse.text()
                     dictRetry = json.loads(responseText)
                     if dictRetry['result'] is not None:
-                        LOG.info(f"🧈 Block {blockhash} has been downloaded.")
+                        LOG.info(f"🧈 Block {blockhash} has now been downloaded.")
                     return getBlockResponse
 
     async def taskRequestHandler(self, request):

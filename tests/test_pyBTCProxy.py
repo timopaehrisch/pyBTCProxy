@@ -97,7 +97,7 @@ async def test_concurrent_requests():
             'dest_pass': os.environ["BITCOIN_PASSWORD"]
         }, 
         'app': {
-            'wait_for_download': 5
+            'wait_for_download': 10
         }
     }
     
@@ -107,15 +107,15 @@ async def test_concurrent_requests():
         async with aiohttp.ClientSession(auth=BasicAuth(os.environ["BITCOIN_USER"], os.environ["BITCOIN_PASSWORD"])) as session:
             # determine random block hash
             destHost = "http://" + os.environ["LISTEN_IP"] + ":" + os.environ["LISTEN_PORT"]
-            randomBlockNumber = random.randrange(1, 10000, 3)
+            randomBlockNumber = random.randrange(1, 490000, 3)
             async with session.post(destHost, json={"method": "getblockhash", "params": [randomBlockNumber]}) as responseBlock:
                 await asyncio.sleep(0.001)
                 dataBlock = await responseBlock.json()
-                LOG.info(f"responseBlock:{dataBlock}")
+#                LOG.info(f"responseBlock:{dataBlock}")
                 assert 'result' in dataBlock
                 randomBlockHash = dataBlock['result']
                 blockLogString = f"[{requestNumber}][Block {randomBlockNumber}" + "]"
-                randSleep = random.randrange(1, 5)
+                randSleep = random.randrange(1, 10)
                 LOG.info(f"{blockLogString} Determined {randomBlockHash} for block {randomBlockNumber}, sleeping {randSleep} seconds.")
 #                await session.close()
             
@@ -143,7 +143,7 @@ async def test_concurrent_requests():
     await asyncio.sleep(2)
 
     # Increase number and config value rpcworkqueue on your pruned node in allow more concurrent calls
-    numRequest = 20
+    numRequest = 200
     LOG.info(f"Creating {numRequest} getblockhash/getblock requests...")
     # Simulate multiple concurrent requests
 #    tasks = [make_request() for _ in range(numRequest)]

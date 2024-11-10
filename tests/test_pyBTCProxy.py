@@ -96,14 +96,15 @@ async def test_concurrent_requests():
             'dest_pass': os.environ["BITCOIN_PASSWORD"]
         }, 
         'app': {
-            'wait_for_download': 10
+            'wait_for_download': 3
         }
     }
     
     proxy.start()
     blocks_pruned = []
     blocks_retrieved = []
-    numRequest = 25
+    # Increase number and config value rpcworkqueue on your pruned node in allow more concurrent calls
+    numRequest = 40
 
     async def make_request(requestNumber):
         async with aiohttp.ClientSession(auth=BasicAuth(os.environ["BITCOIN_USER"], os.environ["BITCOIN_PASSWORD"])) as session:
@@ -122,7 +123,7 @@ async def test_concurrent_requests():
 #                await session.close()
             
 #            LOG.info(f"{blockLogString} Sleeping {randSleep} seconds...")
-            await asyncio.sleep(randSleep)
+#            await asyncio.sleep(randSleep)
 #            LOG.info(f"{blockLogString} woken up")
             
             async with aiohttp.ClientSession(auth=BasicAuth(os.environ["BITCOIN_USER"], os.environ["BITCOIN_PASSWORD"])) as session2:
@@ -146,7 +147,6 @@ async def test_concurrent_requests():
     # wait for proxy to start up
     await asyncio.sleep(2)
 
-    # Increase number and config value rpcworkqueue on your pruned node in allow more concurrent calls
     LOG.info(f"Creating {numRequest} getblockhash/getblock requests...")
     # Simulate multiple concurrent requests
 #    tasks = [make_request() for _ in range(numRequest)]
@@ -157,7 +157,7 @@ async def test_concurrent_requests():
 
     results = await asyncio.gather(*tasks)
     LOG.info(f"getblockhash/getblock request tasks have been gathered.")
-    LOG.info(f"Results [Total/Downloaded/Pruned]: [{numRequest}]/" + str(len(blocks_retrieved)) + "/" + str(len(blocks_pruned)) + "]")
+    LOG.info(f"Results [Total/Downloaded/Pruned]: [{numRequest}/" + str(len(blocks_retrieved)) + "/" + str(len(blocks_pruned)) + "]")
 
     for result in results:
         if 'error' in results:

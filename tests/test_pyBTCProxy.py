@@ -105,42 +105,42 @@ async def test_concurrent_requests():
 
     async def make_request():
         async with aiohttp.ClientSession() as session:
-#            connector = aiohttp.TCPConnector(limit=100)
             # determine random block hash
-            randomBlock = random.randrange(1, 300000, 3)
-            async with session.post("http://10.0.0.3:8330", json={"method": "getblockhash", "params": [randomBlock]}) as responseBlock:
-#                parameters = {'height': randomBlock}
-#            async with session.request(method="POST", url="http://10.0.0.3:8330", params=parameters) as responseBlock:
+            randomBlockNumber = random.randrange(1, 300000, 3)
+            async with session.post("http://10.0.0.3:8330", json={"method": "getblockhash", "params": [randomBlockNumber]}) as responseBlock:
                 await asyncio.sleep(0.001)
-                text = await responseBlock.text()
 #                LOG.info(f"responseBlock:{text}")
                 dataBlock = await responseBlock.json()
                 assert 'result' in dataBlock
                 randomBlockHash = dataBlock['result']
-                LOG.info(f"Determined {randomBlockHash} for block {randomBlock}")
+                blockLogString = f"[Block {randomBlockNumber}" + "]"
+                LOG.info(f"{blockLogString} Determined {randomBlockHash} for block {randomBlockNumber}")
 
-            randSleep = random.randrange(1, 10)
-            LOG.info(f"Sleeping {randSleep} seconds...")
+            randSleep = random.randrange(1, 7)
+            LOG.info(f"{blockLogString} Sleeping {randSleep} seconds...")
             await asyncio.sleep(randSleep)
-            LOG.info(f"Continuing for block {randomBlock}")
+            LOG.info(f"{blockLogString} woken up")
             
             async with aiohttp.ClientSession() as session2:
                 async with session2.post("http://10.0.0.3:8330", json={"method": "getblock", "params": [randomBlockHash]}) as response:
                     await asyncio.sleep(0.001)
- #                   text = await response.text()
-#                    LOG.info(f"response:{text}")
+                    if response.status != 200:
+                        text = await response.text()
+                        LOG.info(f"response:{text}")
                     assert response.status == 200
                     blockData = await response.json()
-                    assert blockData['result'] is not None
-                    dataSize = len(blockData['result'])
-                    LOG.info(f"Retrieved block with size {dataSize}")
+                    if blockData['result'] is None and blockData['error']['code'] == -1:
+                        LOG.info(f"{blockLogString} is pruned")
+                    else:
+                        dataSize = len(blockData['result'])
+                        LOG.info(f"{blockLogString} Retrieved block with size {dataSize}")
                     return blockData
             
     # wait for proxy to start up
     LOG.info("Waiting for proxy to start up")
     await asyncio.sleep(2)
 
-    numRequest = 2
+    numRequest = 30
     LOG.info(f"Creating {numRequest} getblockhash/getblock requests...")
     # Simulate multiple concurrent requests
     tasks = [make_request() for _ in range(numRequest)]

@@ -181,7 +181,7 @@ class BTCProxy:
         LOG.info(f"Dest URL is {destipadress}:{destportnumber}")
 
         async with session.post(url, json={"method": method, "params": params}) as response:
-            resp_json = await response.json()
+#            resp_json = await response.json()
             data = await response.text()
             LOG.info(f"Response for forwarded request: {method}: {data[:200]}...{data[-200:]}")
             return response

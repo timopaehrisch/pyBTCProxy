@@ -124,8 +124,6 @@ async def test_concurrent_requests():
             LOG.info(f"Continuing for block {randomBlock}")
             
             async with aiohttp.ClientSession() as session2:
-
-    #            async with session.request(method="POST",url="http://10.0.0.3:8330", params=randomBlockHash) as response:
                 async with session2.post("http://10.0.0.3:8330", json={"method": "getblock", "params": [randomBlockHash]}) as response:
                     await asyncio.sleep(0.001)
                     text = await response.text()

@@ -12,3 +12,4 @@ test_proxy.py
 .idea
 __pycache__
 env/
+#pytest.ini

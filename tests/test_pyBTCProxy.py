@@ -18,9 +18,11 @@ logging.basicConfig(format='%(asctime)s %(levelname)s [pyBTC] %(message)s', leve
 LOG = logging.getLogger(__name__)
 
 def test_load_env_vars_pytest_env():
-    assert os.environ["PRUNED_HOST"]
-    assert os.environ["PRUNED_PORT"]
+    assert os.environ["PRUNED_HOST"] != "CHANGE_ME"
+    assert os.environ["PRUNED_PORT"] != "CHANGE_ME"
     assert os.environ["BITCOIN_USER"]
+    assert os.environ["LISTEN_IP"]
+    assert os.environ["LISTEN_PORT"]
     assert os.environ["BITCOIN_PASSWORD"] != "CHANGE_ME"
 
 @pytest.fixture

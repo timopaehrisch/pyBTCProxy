@@ -1,13 +1,17 @@
 [pytest]
 pythonpath = .
+addopts = --exitfirst
 log_cli = 1
 log_cli_level = INFO
 log_cli_format = [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)
 log_cli_date_format=%Y-%m-%d %H:%M:%S
 env =
+#    PRUNED_HOST=CHANGE_ME
     PRUNED_HOST=10.0.0.3
+#    PRUNED_PORT=CHANGE_ME
     PRUNED_PORT=8332
     BITCOIN_USER=bitcoin
+#    BITCOIN_PASSWORD=CHANGE_ME
     BITCOIN_PASSWORD=h784gz67fw3g4uef4334gfdiuhjdeg
     LISTEN_IP = 127.0.0.1
     LISTEN_PORT = 8080

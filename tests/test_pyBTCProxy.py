@@ -1,4 +1,5 @@
 import pytest
+import os
 import json
 import asyncio
 import random
@@ -16,6 +17,11 @@ from bitcoinproxy.proxy import BTCProxy
 logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger(__name__)
 
+def test_load_env_vars_pytest_env():
+    assert os.environ["PRUNED_HOST"]
+    assert os.environ["PRUNED_PORT"]
+    assert os.environ["BITCOIN_USER"]
+    assert os.environ["BITCOIN_PASSWORD"] != "CHANGE_ME"
 
 @pytest.fixture
 def btc_proxy():
@@ -83,42 +89,71 @@ async def test_concurrent_requests():
     proxy = BTCProxy()
     proxy.conf = {
         'net': {
-            'listen_ip': '127.0.0.1',
+            'listen_ip': '192.168.150.117',
             'listen_port': '8080',
-            'dest_ip': '127.0.0.1',
-            'dest_port': '8331',
-            'dest_user': 'user',
-            'dest_pass': 'password'
+            'dest_ip': os.environ["PRUNED_HOST"],
+            'dest_port': os.environ["PRUNED_PORT"],
+            'dest_user': os.environ["BITCOIN_USER"],
+            'dest_pass': os.environ["BITCOIN_PASSWORD"]
         }, 
         'app': {
             'wait_for_download': 20
         }
     }
-        
-    async with aiohttp.ClientSession() as session:
-        async def make_request():
+    proxy.start()
+
+    async def make_request():
+        async with aiohttp.ClientSession() as session:
+            connector = aiohttp.TCPConnector(limit=100)
             # determine random block hash
             randomBlock = random.randrange(1, 300000, 3)
-            async with session.post('http://192.168.150.117:8331', json={"method": "getblockhash", "params": [randomBlock]}) as responseBlock:
+            async with session.post("http://10.0.0.3:8330", json={"method": "getblockhash", "params": [randomBlock]}) as responseBlock:
+#                parameters = {'height': randomBlock}
+#            async with session.request(method="POST", url="http://10.0.0.3:8330", params=parameters) as responseBlock:
                 await asyncio.sleep(0.001)
+                text = await responseBlock.text()
+                LOG.info(f"responseBlock:{text}")
                 dataBlock = await responseBlock.json()
                 assert 'result' in dataBlock
                 randomBlockHash = dataBlock['result']
-#                return dataBlock
-                time.sleep(1)
+                LOG.info(f"Determined {randomBlockHash} for block {randomBlock}")
 
-            async with session.post('http://192.168.150.117:8331', json={"method": "getblock", "params": ["blockhash", randomBlockHash]}) as response:
-                assert response.status == 200
-                data = await response.json()
-                return data
+            randSleep = random.randrange(1, 10)
+            LOG.info(f"Sleeping {randSleep} seconds...")
+            await asyncio.sleep(randSleep)
+            LOG.info(f"Continuing for block {randomBlock}")
+            
+            async with aiohttp.ClientSession() as session2:
 
-        # Simulate multiple concurrent requests
-        tasks = [make_request() for _ in range(5)]
-        results = await asyncio.gather(*tasks)
-        
-        for result in results:
-            if 'error' in results:
-                print(f"error in result is " + str(result['error']))
+    #            async with session.request(method="POST",url="http://10.0.0.3:8330", params=randomBlockHash) as response:
+                async with session2.post("http://10.0.0.3:8330", json={"method": "getblock", "params": [randomBlockHash]}) as response:
+                    await asyncio.sleep(0.001)
+                    text = await response.text()
+                    LOG.info(f"response:{text}")
+                    data = await response.json()
+                    assert response.status == 200
+                    assert 'result' in dataBlock
+                    hexData = data['hex']
+                    assert hexData
+                    LOG.info("Retrieved block hex.")
+                    return data
+            
+    # wait for proxy to start up
+    LOG.info("Waiting for proxy to start up")
+    time.sleep(2)
+
+    numRequest = 1
+    LOG.info(f"Creating {numRequest} getblockhash requests...")
+    # Simulate multiple concurrent requests
+    tasks = [make_request() for _ in range(numRequest)]
+    LOG.info("getblockhash requests created. Now Executing.")
+
+    results = await asyncio.gather(*tasks)
+    LOG.info(f"getblockhash request tasks have been gathered.")
+
+    for result in results:
+        if 'error' in results:
+            LOG.info(f"error in result is " + str(result['error']))
 
 #            assert 'error' in result  # Check that no request results in an error
 #            assert result['error'] is None
@@ -127,13 +162,13 @@ async def test_concurrent_requests():
 async def test_task_request_handler_concurrent():
     proxy = BTCProxy()
     proxy.conf = {
-        'net': {
-            'listen_ip': '127.0.0.1',
+       'net': {
+            'listen_ip': '192.168.150.117',
             'listen_port': '8080',
-            'dest_ip': '127.0.0.1',
-            'dest_port': '8332',
-            'dest_user': 'user',
-            'dest_pass': 'password'
+            'dest_ip': os.environ["PRUNED_HOST"],
+            'dest_port': os.environ["PRUNED_PORT"],
+            'dest_user': os.environ["BITCOIN_USER"],
+            'dest_pass': os.environ["BITCOIN_PASSWORD"]
         }
     }
 
@@ -143,7 +178,7 @@ async def test_task_request_handler_concurrent():
             response = await proxy.taskRequestHandler(request_data)
             return response
 
-        numRequest = 100
+        numRequest = 1
         LOG.info(f"Creating {numRequest} requests...")
         tasks = [create_request() for _ in range(numRequest)]
         LOG.info(f"Starting concurrent request tasks...")

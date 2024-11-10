@@ -23,36 +23,29 @@ class BTCProxy:
         self.session = None
         self.configFile = configFile
         self.waitForDownload = 0
-
-    def start(self):
-        #logging.basicConfig(filename='proxy.log', level=logging.DEBUG)
         logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
 
-        LOG.debug('start()')
-        main_base = os.path.dirname(__file__)
-        configFileFullPath = os.path.join(main_base, self.configFile)
-        LOG.info(f"Using config file " + configFileFullPath)
 
-        parser = configparser.ConfigParser()
-        if not parser.read(configFileFullPath):
-            raise FileNotFoundError(f"Config file not found ({configFileFullPath})")
+    def start(self):
+        LOG.debug('start()')
+        if self.conf is not None:
+            LOG.debug("Configuration values already set.")
         else:
-            parser.read(configFileFullPath)
-#            for section_name in parser.sections():
-#                print('Section:', section_name)
-#                print('  Options:', parser.options(section_name))
-#            for name, value in parser.items(section_name):
-#                print('  %s = %s' % (name, value))
-#            print   
-            self.conf = parser
+            main_base = os.path.dirname(__file__)
+            configFileFullPath = os.path.join(main_base, self.configFile)
+            LOG.info(f"Using config file " + configFileFullPath)
+            parser = configparser.ConfigParser()
+            if not parser.read(configFileFullPath):
+                raise FileNotFoundError(f"Config file not found ({configFileFullPath})")
+            else:
+                parser.read(configFileFullPath)
+                self.conf = parser
 
         serverThread = threading.Thread(target=self.run_server, args=(self.aiohttp_server(),))
         serverThread.start()
-    #   x.join()
 
         statisticThread = threading.Thread(target=self.statistics)
         statisticThread.start()
-    #   y.join()
         
     def aiohttp_server(self):
         app = web.Application()
@@ -65,12 +58,14 @@ class BTCProxy:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             loop.run_until_complete(runner.setup())
-            ipadress = self.getCfg('net','listen_ip')
-            portnumber = self.getCfg('net', 'listen_port')
-
-            site = web.TCPSite(runner, ipadress, portnumber)
+            listen_host = self.getCfg('net','listen_ip')
+            listen_portnumber = self.getCfg('net', 'listen_port')
+            forward_host = self.getCfg('net','dest_ip')
+            forward_portnumber = self.getCfg('net', 'dest_port')
+            LOG.info(f"Proxy is configured to listen on {listen_host}:{listen_portnumber} and forward to {forward_host}:{forward_portnumber}")
+            site = web.TCPSite(runner, listen_host, listen_portnumber)
             loop.run_until_complete(site.start())
-            LOG.info(f"Proxy is Listening on {ipadress}:{portnumber}")
+            LOG.info(f"Proxy is listening on {listen_host}:{listen_portnumber} and forwarding to {forward_host}:{forward_portnumber}")
             loop.run_forever()
 
     async def taskRequestHandler(self, request):
@@ -152,7 +147,6 @@ class BTCProxy:
 
         async with aiohttp.ClientSession(auth=BasicAuth(dest_user, dest_pass)) as self.session:
             if method == 'getblock':
-                LOG.info("FAKE1 " + params[0] + " FAKE2 " + params[1])
                 callParams = [params[1]]
                 try:
                     response = await self.forward_request(self.session, method, callParams)
@@ -184,8 +178,9 @@ class BTCProxy:
 
 
         async with session.post(url, json={"method": method, "params": params}) as response:
-            data = await response.text()
-            LOG.debug(f"Response for forwarded request: {method}: {data[:200]}...{data[-200:]}")
+            resp_json = await response.json()
+#            data = await response.text()
+#            LOG.debug(f"Response for forwarded request: {method}: {data[:200]}...{data[-200:]}")
             return response
 
     async def handle_getblock_error(self, session, params, errorResponse):
@@ -234,9 +229,18 @@ class BTCProxy:
                         self.downloadBlockHashes.add(blockhash)
 
                         if self.waitForDownload:
-                            LOG.debug(f"Waiting {self.waitForDownload}s for download...")
+                            LOG.info(f"Waiting {self.waitForDownload}s for download...")
                             time.sleep(self.waitForDownload)
+                            LOG.info(f"Woke up!")
+                    # retry getblock and just forward result. If we slept above, the block might have been downloaded in the meantime.
+                    LOG.info(
+                            f"🧈 Retrying getblock call for block hash {blockhash[30:]}")
                     getBlockResponse = await self.forward_request(session, 'getblock', [blockhash, 0])
+#                    responseText = await getBlockResponse.text()
+#                    dictResponse = json.loads(responseText)
+#                    if 'hex' in dictResponse:
+#                        LOG.info(
+#                            f"🧈 Block ...{blockhash[30:]} has been downloaded.")
                     return getBlockResponse
 
     async def taskRequestHandler(self, request):
@@ -267,9 +271,9 @@ class BTCProxy:
             return response
 
     
-def main():
-    proxy = BTCProxy()
-    proxy.start()
+#def main():
+ #   proxy = BTCProxy()
+#    proxy.start()
 
-if __name__ == "__main__":
-    main()
+#if __name__ == "__main__":
+#    main()

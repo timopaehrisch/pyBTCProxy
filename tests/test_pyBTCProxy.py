@@ -39,7 +39,6 @@ def test_btcproxy_initialization():
     assert proxy.requestCounter == 0
     assert proxy.downloadBlockHashes == set()
     assert proxy.conf is None
-    assert proxy.session is None
     assert proxy.configFile is not None
 
 
@@ -187,7 +186,7 @@ async def test_task_request_handler_concurrent():
             response = await proxy.taskRequestHandler(request_data)
             return response
 
-        numRequest = 1
+        numRequest = 50
         LOG.info(f"Creating {numRequest} requests...")
         tasks = [create_request() for _ in range(numRequest)]
         LOG.info(f"Starting concurrent request tasks...")

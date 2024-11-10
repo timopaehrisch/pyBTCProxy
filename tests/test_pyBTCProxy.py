@@ -102,6 +102,9 @@ async def test_concurrent_requests():
     }
     
     proxy.start()
+    blocks_pruned = []
+    blocks_retrieved = []
+    numRequest = 25
 
     async def make_request(requestNumber):
         async with aiohttp.ClientSession(auth=BasicAuth(os.environ["BITCOIN_USER"], os.environ["BITCOIN_PASSWORD"])) as session:
@@ -133,9 +136,11 @@ async def test_concurrent_requests():
                     blockData = await response.json()
                     if blockData['result'] is None and blockData['error']['code'] == -1:
                         LOG.info(f"{blockLogString} is pruned")
+                        blocks_pruned.append(randomBlockNumber)
                     else:
                         dataSize = len(blockData['result'])
                         LOG.info(f"{blockLogString} Retrieved block with size {dataSize}")
+                        blocks_retrieved.append(randomBlockNumber)
 #                    await session2.close()
                     return blockData
             
@@ -143,7 +148,6 @@ async def test_concurrent_requests():
     await asyncio.sleep(2)
 
     # Increase number and config value rpcworkqueue on your pruned node in allow more concurrent calls
-    numRequest = 200
     LOG.info(f"Creating {numRequest} getblockhash/getblock requests...")
     # Simulate multiple concurrent requests
 #    tasks = [make_request() for _ in range(numRequest)]
@@ -154,6 +158,7 @@ async def test_concurrent_requests():
 
     results = await asyncio.gather(*tasks)
     LOG.info(f"getblockhash/getblock request tasks have been gathered.")
+    LOG.info(f"Results [Total/Downloaded/Pruned]: [{numRequest}]/" + str(len(blocks_retrieved)) + "/" + str(len(blocks_pruned)) + "]")
 
     for result in results:
         if 'error' in results:

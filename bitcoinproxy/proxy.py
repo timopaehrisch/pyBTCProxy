@@ -229,7 +229,7 @@ class BTCProxy:
 
                         waitForDownload = int(self.getCfg('app','wait_for_download'))
                         if waitForDownload:
-                            LOG.info(f"Waiting {waitForDownload}s for download block.")
+                            LOG.info(f"Waiting {waitForDownload}s to download block")
                             await asyncio.sleep(waitForDownload)
                             LOG.info(f"Woke up!")
                     # retry getblock and just forward result. If we slept above, the block might have been downloaded in the meantime.
@@ -238,8 +238,8 @@ class BTCProxy:
                     
                     responseText = await getBlockResponse.text()
                     dictRetry = json.loads(responseText)
-                    if 'hex' in dictRetry:
-                        LOG.info(f"🧈 Block ...{blockhash[30:]} has been downloaded.")
+                    if dictRetry['result'] not None:
+                        LOG.info(f"🧈 Block ...{blockhash} has been downloaded.")
                     return getBlockResponse
 
     async def taskRequestHandler(self, request):

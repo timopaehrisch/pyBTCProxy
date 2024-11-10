@@ -63,7 +63,10 @@ class BTCProxy:
             forward_portnumber = self.getCfg('net', 'dest_port')
             LOG.info(f"Proxy is configured to listen on {listen_host}:{listen_portnumber} and forward to {forward_host}:{forward_portnumber}")
             site = web.TCPSite(runner, listen_host, listen_portnumber)
-            loop.run_until_complete(site.start())
+            try:
+                loop.run_until_complete(site.start())
+            except Exception as err:
+                LOG.info(f"Unexpected {err=}, {type(err)=}")
             LOG.info(f"Proxy is listening on {listen_host}:{listen_portnumber} and forwarding to {forward_host}:{forward_portnumber}")
             loop.run_forever()
 
@@ -239,7 +242,7 @@ class BTCProxy:
                     responseText = await getBlockResponse.text()
                     dictRetry = json.loads(responseText)
                     if dictRetry['result'] is not None:
-                        LOG.info(f"🧈 Block ...{blockhash} has been downloaded.")
+                        LOG.info(f"🧈 Block {blockhash} has been downloaded.")
                     return getBlockResponse
 
     async def taskRequestHandler(self, request):
@@ -270,9 +273,9 @@ class BTCProxy:
             return response
 
     
-def main():
-    proxy = BTCProxy()
-    proxy.start()
+#def main():
+#    proxy = BTCProxy()
+#    proxy.start()
 
-if __name__ == "__main__":
-    main()
+#if __name__ == "__main__":
+#    main()

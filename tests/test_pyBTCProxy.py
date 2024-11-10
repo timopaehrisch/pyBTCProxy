@@ -100,11 +100,12 @@ async def test_concurrent_requests():
             'wait_for_download': 20
         }
     }
+    
     proxy.start()
 
     async def make_request():
         async with aiohttp.ClientSession() as session:
-            connector = aiohttp.TCPConnector(limit=100)
+#            connector = aiohttp.TCPConnector(limit=100)
             # determine random block hash
             randomBlock = random.randrange(1, 300000, 3)
             async with session.post("http://10.0.0.3:8330", json={"method": "getblockhash", "params": [randomBlock]}) as responseBlock:
@@ -112,7 +113,7 @@ async def test_concurrent_requests():
 #            async with session.request(method="POST", url="http://10.0.0.3:8330", params=parameters) as responseBlock:
                 await asyncio.sleep(0.001)
                 text = await responseBlock.text()
-                LOG.info(f"responseBlock:{text}")
+#                LOG.info(f"responseBlock:{text}")
                 dataBlock = await responseBlock.json()
                 assert 'result' in dataBlock
                 randomBlockHash = dataBlock['result']
@@ -126,32 +127,31 @@ async def test_concurrent_requests():
             async with aiohttp.ClientSession() as session2:
                 async with session2.post("http://10.0.0.3:8330", json={"method": "getblock", "params": [randomBlockHash]}) as response:
                     await asyncio.sleep(0.001)
-                    text = await response.text()
-                    LOG.info(f"response:{text}")
-                    data = await response.json()
+ #                   text = await response.text()
+#                    LOG.info(f"response:{text}")
                     assert response.status == 200
-                    assert 'result' in dataBlock
-                    hexData = data['hex']
-                    assert hexData
-                    LOG.info("Retrieved block hex.")
-                    return data
+                    blockData = await response.json()
+                    assert blockData['result'] is not None
+                    dataSize = len(blockData['result'])
+                    LOG.info(f"Retrieved block with size {dataSize}")
+                    return blockData
             
     # wait for proxy to start up
     LOG.info("Waiting for proxy to start up")
-    time.sleep(2)
+    await asyncio.sleep(2)
 
-    numRequest = 1
-    LOG.info(f"Creating {numRequest} getblockhash requests...")
+    numRequest = 2
+    LOG.info(f"Creating {numRequest} getblockhash/getblock requests...")
     # Simulate multiple concurrent requests
     tasks = [make_request() for _ in range(numRequest)]
-    LOG.info("getblockhash requests created. Now Executing.")
+    LOG.info("getblockhash/getblock requests created. Now Executing.")
 
     results = await asyncio.gather(*tasks)
-    LOG.info(f"getblockhash request tasks have been gathered.")
+    LOG.info(f"getblockhash/getblock request tasks have been gathered.")
 
-    for result in results:
-        if 'error' in results:
-            LOG.info(f"error in result is " + str(result['error']))
+#    for result in results:
+#        if 'error' in results:
+#            LOG.info(f"error in result is " + str(result['error']))
 
 #            assert 'error' in result  # Check that no request results in an error
 #            assert result['error'] is None

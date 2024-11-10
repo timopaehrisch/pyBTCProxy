@@ -238,7 +238,7 @@ class BTCProxy:
                     
                     responseText = await getBlockResponse.text()
                     dictRetry = json.loads(responseText)
-                    if dictRetry['result'] not None:
+                    if dictRetry['result'] is not None:
                         LOG.info(f"🧈 Block ...{blockhash} has been downloaded.")
                     return getBlockResponse
 

@@ -9,6 +9,7 @@ import threading
 import logging
 from aiohttp import web, BasicAuth
 
+logging.basicConfig(format='%(asctime)s %(levelname)s [pyBTC] %(message)s', level=logging.INFO)
 LOG = logging.getLogger(__name__)
 
 class BTCProxy:
@@ -20,9 +21,8 @@ class BTCProxy:
         self.requestCounter = 0
         self.downloadBlockHashes = set()
         self.conf = None
-#        self.session = None
         self.configFile = configFile
-        logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
+        
 
 
     def start(self):
@@ -234,7 +234,7 @@ class BTCProxy:
                         if waitForDownload:
                             LOG.info(f"Waiting {waitForDownload}s to download block")
                             await asyncio.sleep(waitForDownload)
-                            LOG.info(f"Woke up!")
+#                            LOG.info(f"Woke up!")
                     # retry getblock and just forward result. If we slept above, the block might have been downloaded in the meantime.
                     LOG.info(f"🧈 Retrying getblock call for block hash {blockhash}")
                     getBlockResponse = await self.forward_request(session, 'getblock', [blockhash, 0])

@@ -14,7 +14,7 @@ from aiohttp import web, BasicAuth
 from unittest.mock import patch, MagicMock
 from bitcoinproxy.proxy import BTCProxy
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(format='%(asctime)s %(levelname)s [pyBTC] %(message)s', level=logging.DEBUG)
 LOG = logging.getLogger(__name__)
 
 def test_load_env_vars_pytest_env():

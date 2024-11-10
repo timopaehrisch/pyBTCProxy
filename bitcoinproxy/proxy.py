@@ -22,7 +22,6 @@ class BTCProxy:
         self.conf = None
         self.session = None
         self.configFile = configFile
-        self.waitForDownload = 0
         logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
 
 
@@ -228,9 +227,10 @@ class BTCProxy:
                             f"🧈 Block ...{blockhash[30:]}: download initiated via peer id {peer_id} / {peer_addr}")
                         self.downloadBlockHashes.add(blockhash)
 
-                        if self.getCfg('app','wait_for_download'):
-                            LOG.info(f"Waiting {self.waitForDownload}s for download block.")
-                            await asyncio.sleep(self.waitForDownload)
+                        waitForDownload = self.getCfg('app','wait_for_download')
+                        if waitForDownload:
+                            LOG.info(f"Waiting {waitForDownload}s for download block.")
+                            await asyncio.sleep(waitForDownload)
                             LOG.info(f"Woke up!")
                     # retry getblock and just forward result. If we slept above, the block might have been downloaded in the meantime.
                     LOG.info(f"🧈 Retrying getblock call for block hash {blockhash}")
@@ -269,9 +269,9 @@ class BTCProxy:
             return response
 
     
-#def main():
- #   proxy = BTCProxy()
-#    proxy.start()
+def main():
+    proxy = BTCProxy()
+    proxy.start()
 
-#if __name__ == "__main__":
-#    main()
+if __name__ == "__main__":
+    main()

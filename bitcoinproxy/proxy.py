@@ -167,14 +167,14 @@ class BTCProxy:
 #                    LOG.info(f"Cannot retrieve block from bitcoind: {dictResponse}")
                     getBlockErrorResponse = await self.handle_getblock_error(session, callParams, response)
                     responseText = await getBlockErrorResponse.text()
-                return web.Response(text=responseText, content_type='text/plain')
+                return web.Response(text=responseText, content_type='text/plain', charset='utf-8')
             else:
                 try:
                     response = await self.forward_request(session, method, params)
                 except Exception as e:
                     LOG.error(f"Error forwarding generic request: {str(e)}")
                 responseText = await response.text()
-                return web.Response(text=responseText, content_type='text/plain')
+                return web.Response(text=responseText, content_type='text/plain', charset='utf-8')
     #                    response = {'error': str(e)}
  
     async def forward_request(self, session, method, params):

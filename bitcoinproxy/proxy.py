@@ -170,7 +170,7 @@ class BTCProxy:
                     responseText = await getBlockErrorResponse.text()
                     return web.Response(text=responseText, content_type='text/plain', charset='utf-8')
                 else:
-                    return web.json_response(responseJson, content_type="text/plain")
+                    return web.json_response(responseJson)
             else:
                 try:
                     response = await self.forward_request(session, method, params)

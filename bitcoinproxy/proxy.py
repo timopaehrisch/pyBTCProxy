@@ -170,7 +170,7 @@ class BTCProxy:
                     responseText = await getBlockErrorResponse.text()
                     return web.Response(text=responseText, content_type='text/plain', charset='utf-8')
                 else:
-                    return web.Response(text=json.dumps(responseJson), content_type='application/json', charset='utf-8')
+                    return web.Response(text=responseJson, content_type='application/json', charset='utf-8')
 #                    return web.json_response(responseJson)
             else:
                 try:

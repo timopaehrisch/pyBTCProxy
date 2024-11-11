@@ -170,14 +170,14 @@ class BTCProxy:
                     responseText = await getBlockErrorResponse.text()
                     return web.Response(text=responseText, content_type='text/plain', charset='utf-8')
                 else:
-                    return web.Response(text=responseText, content_type='text/plain', charset='utf-8')
+                    return web.Response(text=responseText, content_type='application/json', charset='utf-8')
 #                    return web.json_response(responseJson)
             else:
                 try:
                     response = await self.forward_request(session, method, params)
                 except Exception as e:
                     LOG.error(f"Error forwarding generic request: {str(e)}")
-                responseText = await response.text()
+#                responseText = await response.text()
 #                return web.json_response(await response.json())
                 return web.Response(text=responseText, content_type='text/plain', charset='utf-8')
     #                    response = {'error': str(e)}

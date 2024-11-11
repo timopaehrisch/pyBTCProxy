@@ -145,8 +145,8 @@ class BTCProxy:
         request_json = json.loads(data)
         method = request_json.get('method', '')
         params = request_json.get('params', [])
-        headers = request.headers
-
+#        headers = request.headers
+        headers = ""
         if method != 'gettxout':
             LOG.info(f"-> Incoming request {method} {params} {headers}")
 #            LOG.info(f"-> Incoming request {method} {params}")
@@ -191,7 +191,7 @@ class BTCProxy:
         async with session.post(url, json={"method": method, "params": params}) as response:
 #            resp_json = await response.json()
             data = await response.text()
-            LOG.info(f"Response for forwarded request {method}: {data[:200]}...{data[-200:]}")
+            LOG.debug(f"Response for forwarded request {method}: {data[:200]}...{data[-200:]}")
             return response
 
     async def handle_getblock_error(self, session, params, errorResponse):

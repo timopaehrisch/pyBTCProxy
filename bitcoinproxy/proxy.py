@@ -169,9 +169,11 @@ class BTCProxy:
                     LOG.info(f"Cannot retrieve block from bitcoind: {responseJson}")
                     getBlockErrorResponse = await self.handle_getblock_error(session, callParams, response)
                     responseText = await getBlockErrorResponse.text()
-                    return web.Response(text=responseText, content_type='text/plain', charset='utf-8')
+                    content_type = getBlockErrorResponse.headers['Content-Type']
+                    return web.Response(text=responseText, content_type=content_type, charset='utf-8')
                 else:
-                    return web.Response(text=responseText, content_type='text/plain', charset='utf-8')
+                    content_type = response.headers['Content-Type']
+                    return web.Response(text=responseText, content_type=content_type, charset='utf-8')
 #                    return web.json_response(responseJson)
             else:
                 try:

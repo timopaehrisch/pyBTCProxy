@@ -163,14 +163,14 @@ class BTCProxy:
                     response = {'error': str(e)}
 
  #               responseText = await response.text()
-                dictResponse = await response.json()
-                if 'error' in dictResponse and dictResponse['error'] != None:
-                    LOG.info(f"Cannot retrieve block from bitcoind: {dictResponse}")
+                responseJson = await response.json()
+                if 'error' in responseJson and responseJson['error'] != None:
+                    LOG.info(f"Cannot retrieve block from bitcoind: {responseJson}")
                     getBlockErrorResponse = await self.handle_getblock_error(session, callParams, response)
                     responseText = await getBlockErrorResponse.text()
-
-#                return web.json_response(await getBlockErrorResponse.json())
-                return web.Response(text=responseText, content_type='text/plain', charset='utf-8')
+                    return web.Response(text=responseText, content_type='text/plain', charset='utf-8')
+                else:
+                    return web.json_response(responseJson)
             else:
                 try:
                     response = await self.forward_request(session, method, params)

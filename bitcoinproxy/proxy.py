@@ -162,15 +162,15 @@ class BTCProxy:
                     LOG.error(f"Error forwarding getblock request: {str(e)}")
                     response = {'error': str(e)}
 
-                responseText = await response.text()
-#                dictResponse = json.loads(responseText)
+ #               responseText = await response.text()
                 dictResponse = await response.json()
                 if 'error' in dictResponse and dictResponse['error'] != None:
-#                    LOG.info(f"Cannot retrieve block from bitcoind: {dictResponse}")
+                    LOG.info(f"Cannot retrieve block from bitcoind: {dictResponse}")
                     getBlockErrorResponse = await self.handle_getblock_error(session, callParams, response)
                     responseText = await getBlockErrorResponse.text()
-                return web.json_response(await getBlockErrorResponse.json())
-#                return web.Response(text=responseText, content_type='text/plain', charset='utf-8')
+
+#                return web.json_response(await getBlockErrorResponse.json())
+                return web.Response(text=responseText, content_type='text/plain', charset='utf-8')
             else:
                 try:
                     response = await self.forward_request(session, method, params)

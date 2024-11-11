@@ -163,6 +163,7 @@ class BTCProxy:
                     response = {'error': str(e)}
 
                 responseText = await response.text()
+                LOG.info(f"responseText; {responseText}")
                 responseJson = await response.json()
                 if 'error' in responseJson and responseJson['error'] != None:
                     LOG.info(f"Cannot retrieve block from bitcoind: {responseJson}")

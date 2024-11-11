@@ -173,8 +173,8 @@ class BTCProxy:
                     return web.Response(text=responseText, content_type=content_type, charset='utf-8')
                 else:
                     content_type = response.headers['Content-Type']
-                    return web.Response(text=responseText, content_type=content_type, charset='utf-8')
-#                    return web.json_response(responseJson)
+#                    return web.Response(text=responseText, content_type=content_type, charset='utf-8')
+                    return web.json_response(responseText)
             else:
                 try:
                     response = await self.forward_request(session, method, params)

@@ -1,5 +1,5 @@
 from bitcoinproxy.proxy import BTCProxy
 
 
-prox = BTCProxy()
+prox: BTCProxy = BTCProxy()
 prox.start()

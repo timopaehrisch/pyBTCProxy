@@ -4,7 +4,7 @@ import aiohttp
 import asyncio
 import time
 import os
-import configparser
+from configparser import ConfigParser
 import threading
 import logging
 from aiohttp import web, BasicAuth
@@ -15,31 +15,31 @@ logging.getLogger('aiohttp.access').setLevel(logging.WARNING)
 
 class BTCProxy:
 
-    def __init__(self, configFile = 'proxy.conf'):
-        self.startTime = int(time.time())
-        self.background_tasks = set()
-        self.taskCounter = 0
-        self.requestCounter = 0
-        self.downloadBlockHashes = set()
+    def __init__(self, configFile = 'proxy.conf') -> None:
+        self.startTime: int = int(time.time())
+        self.background_tasks= set()
+        self.taskCounter: int = 0
+        self.requestCounter: int = 0
+        self.downloadBlockHashes = set[int]
         self.conf = None
         self.configFile = configFile
         
 
 
-    def start(self):
+    def start(self) -> None:
         LOG.debug('start()')
         if self.conf is not None:
             LOG.debug("Configuration values already set.")
         else:
-            main_base = os.path.dirname(__file__)
+            main_base: str = os.path.dirname(__file__)
             configFileFullPath = os.path.join(main_base, self.configFile)
             LOG.info(f"Using config file " + configFileFullPath)
-            parser = configparser.ConfigParser()
+            parser = ConfigParser()
             if not parser.read(configFileFullPath):
                 raise FileNotFoundError(f"Config file not found ({configFileFullPath})")
             else:
                 parser.read(configFileFullPath)
-                self.conf = parser
+                self.conf: ConfigParser = parser
 
         serverThread = threading.Thread(target=self.run_server, args=(self.aiohttp_server(),))
         serverThread.start()
@@ -47,7 +47,7 @@ class BTCProxy:
         statisticThread = threading.Thread(target=self.statistics)
         statisticThread.start()
         
-    def aiohttp_server(self):
+    def aiohttp_server(self) -> web.AppRunner:
         app = web.Application()
         app.router.add_post('/', self.taskRequestHandler)
         runner = web.AppRunner(app)
@@ -71,7 +71,7 @@ class BTCProxy:
             LOG.info(f"Proxy is listening on {listen_host}:{listen_portnumber} and forwarding to {forward_host}:{forward_portnumber}")
             loop.run_forever()
 
-    async def taskRequestHandler(self, request):
+    async def taskRequestHandler(self, request) -> web.Response | None:
         requestTask = asyncio.create_task(self._handle(request), name="Task#" + str(self.taskCounter))
         LOG.debug(f"{requestTask.get_name()}: Task created.")
         self.taskCounter += 1
@@ -121,25 +121,20 @@ class BTCProxy:
 
                 time.sleep(180)
 
-    def getCfg(self, sectionName, valueName):
+    def getCfg(self, sectionName, valueName) -> str:
             if not self.conf:
                 LOG.info("Configuration has not been properly initiated.")
-                return None
+                return ''
             if not sectionName in self.conf:
                 LOG.error(f"No section with name {sectionName} found in configuration.")
-                return None
+                return ''
             if not valueName in self.conf[sectionName]:
                 LOG.error(f"No value with name '{valueName} found in configuration.")
-                return None
+                return ''
             return self.conf[sectionName][valueName]
 
-    def createSession(self):
-        dest_user = self.getCfg('net','dest_user')
-        dest_pass = self.getCfg('net','dest_pass')
-        session = aiohttp.ClientSession(auth=BasicAuth(dest_user, dest_pass))
-        return session
 
-    async def handle_request(self, request):
+    async def handle_request(self, request) -> web.Response:
         data = await request.text()
         self.requestCounter += 1
         request_json = json.loads(data)
@@ -150,12 +145,11 @@ class BTCProxy:
         if method != 'gettxout':
             LOG.info(f"-> Incoming request {method} {params} {headers}")
 #            LOG.info(f"-> Incoming request {method} {params}")
-        dest_user = self.getCfg('net','dest_user')
-        dest_pass = self.getCfg('net','dest_pass')
+        dest_user: str = self.getCfg('net','dest_user')
+        dest_pass: str = self.getCfg('net','dest_pass')
         async with aiohttp.ClientSession(auth=BasicAuth(dest_user, dest_pass)) as session:
-#        async with self.createSession() as session:
             if method == 'getblock':
-                callParams = [params[0]]
+                callParams: list[str] = [params[0]]
                 try:
                     response = await self.forward_request(session, method, callParams)
                 except Exception as e:
@@ -190,9 +184,7 @@ class BTCProxy:
         destportnumber = self.getCfg('net','dest_port')
         url = f"http://{destipadress}:{destportnumber}"
         LOG.debug(f"Dest URL is {destipadress}:{destportnumber}")
-#        session = self.createSession()
         async with session.post(url, json={"method": method, "params": params}) as response:
-#            resp_json = await response.json()
             data = await response.text()
             LOG.debug(f"Response for forwarded request {method}: {data[:200]}...{data[-200:]}")
             return response

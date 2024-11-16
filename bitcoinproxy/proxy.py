@@ -8,9 +8,30 @@ from configparser import ConfigParser
 import threading
 import logging
 from aiohttp import web, BasicAuth, ClientSession
+from rich.console import Console
+from rich.theme import Theme
+
+
+class LOGGING:
+    def __init__(self) -> None:
+        self.custom_theme = Theme(
+            {"debug": "black", 'info': "bold cyan", "warn": "magenta", "error": "bold red"}
+        )
+        self.console = Console(theme=self.custom_theme)
+    def debug(self, message: str):
+        self.console.print(message, style="debug")
+    def info(self, message: str):
+        self.console.print(message, style="info")
+    def warn(self, message: str):
+        self.console.print(message, style="warn")
+    def error(self, message: str):
+        self.console.print(message, style="error")
+
+
+LOG = LOGGING()
 
 logging.basicConfig(format='%(asctime)s %(levelname)s [pyBTC] %(message)s', level=logging.INFO)
-LOG = logging.getLogger(__name__)
+#LOG = logging.getLogger(__name__)
 logging.getLogger('aiohttp.access').setLevel(logging.WARNING)
 
 class BTCProxy:

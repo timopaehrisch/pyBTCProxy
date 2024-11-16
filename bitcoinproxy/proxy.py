@@ -138,8 +138,8 @@ class BTCProxy:
         data = await request.text()
         self.requestCounter += 1
         request_json = json.loads(data)
-        method = request_json.get('method', '')
-        params = request_json.get('params', [])
+        method: str = request_json.get('method', '')
+        params: str = request_json.get('params', [])
 #        headers = request.headers
         headers = ""
         if method != 'gettxout':
@@ -155,13 +155,13 @@ class BTCProxy:
                     LOG.error(f"Error forwarding getblock request: {str(e)}")
                     response: dict[str,str] = {'error': str(e)}
 
-                responseText = await response.text()
+                responseText: str = await response.text()
 #                LOG.info(f"responseText; {responseText}")
                 responseJson = await response.json()
                 if 'error' in responseJson and responseJson['error'] != None:
                     LOG.info(f"Cannot retrieve block from bitcoind: {responseJson}")
                     getBlockErrorResponse: web.Response | None = await self.handle_getblock_error(session, callParams, response)
-                    responseText = await getBlockErrorResponse.text()
+                    responseText: str = await getBlockErrorResponse.text()
                     content_type = getBlockErrorResponse.headers['Content-Type']
                     return web.Response(text=responseText, content_type=content_type, charset='utf-8')
                 else:
@@ -216,7 +216,7 @@ class BTCProxy:
                     peer_addr = randomPeer.get('addr', '')
                     LOG.debug(f"Block {blockhash} will be downloaded from peer {peer_id} / {peer_addr}")
                     try:
-                        getblockfrompeer_result = await self.forward_request(session, 'getblockfrompeer',
+                        getblockfrompeer_result: web.Response = await self.forward_request(session, 'getblockfrompeer',
                                                                             [blockhash, peer_id])
                     except Exception as e:
                         LOG.error(f"Error calling getblockfrompeer: {str(e)}")

@@ -7,7 +7,7 @@ import os
 from configparser import ConfigParser
 import threading
 import logging
-from aiohttp import web, BasicAuth
+from aiohttp import web, BasicAuth, ClientSession
 
 logging.basicConfig(format='%(asctime)s %(levelname)s [pyBTC] %(message)s', level=logging.INFO)
 LOG = logging.getLogger(__name__)
@@ -86,7 +86,7 @@ class BTCProxy:
                 LOG.debug(f"{requestTask.get_name()}: Task is done, execution took " + str(stopTime-startTime) + "ms.")
 
             try:
-                response = requestTask.result()
+                response: web.Response = requestTask.result()
             except asyncio.InvalidStateError:
                 LOG.error(f"{requestTask.get_name()}: Task is in invalid state!")
             except asyncio.CancelledError:
@@ -144,24 +144,23 @@ class BTCProxy:
         headers = ""
         if method != 'gettxout':
             LOG.info(f"-> Incoming request {method} {params} {headers}")
-#            LOG.info(f"-> Incoming request {method} {params}")
         dest_user: str = self.getCfg('net','dest_user')
         dest_pass: str = self.getCfg('net','dest_pass')
         async with aiohttp.ClientSession(auth=BasicAuth(dest_user, dest_pass)) as session:
             if method == 'getblock':
                 callParams: list[str] = [params[0]]
                 try:
-                    response = await self.forward_request(session, method, callParams)
+                    response: web.Response = await self.forward_request(session, method, callParams)
                 except Exception as e:
                     LOG.error(f"Error forwarding getblock request: {str(e)}")
-                    response = {'error': str(e)}
+                    response: dict[str,str] = {'error': str(e)}
 
                 responseText = await response.text()
 #                LOG.info(f"responseText; {responseText}")
                 responseJson = await response.json()
                 if 'error' in responseJson and responseJson['error'] != None:
                     LOG.info(f"Cannot retrieve block from bitcoind: {responseJson}")
-                    getBlockErrorResponse = await self.handle_getblock_error(session, callParams, response)
+                    getBlockErrorResponse: web.Response | None = await self.handle_getblock_error(session, callParams, response)
                     responseText = await getBlockErrorResponse.text()
                     content_type = getBlockErrorResponse.headers['Content-Type']
                     return web.Response(text=responseText, content_type=content_type, charset='utf-8')
@@ -171,7 +170,7 @@ class BTCProxy:
                     return web.json_response(text=responseText)
             else:
                 try:
-                    response = await self.forward_request(session, method, params)
+                    response: web.Response = await self.forward_request(session, method, params)
                 except Exception as e:
                     LOG.error(f"Error forwarding generic request: {str(e)}")
                 responseText = await response.text()
@@ -179,22 +178,22 @@ class BTCProxy:
                 return web.Response(text=responseText, content_type='text/plain', charset='utf-8')
     #                    response = {'error': str(e)}
  
-    async def forward_request(self, session, method, params):
-        destipadress = self.getCfg('net','dest_ip')
-        destportnumber = self.getCfg('net','dest_port')
-        url = f"http://{destipadress}:{destportnumber}"
+    async def forward_request(self, session: ClientSession, method, params) -> web.Response:
+        destipadress: str = self.getCfg('net','dest_ip')
+        destportnumber: str = self.getCfg('net','dest_port')
+        url: str = f"http://{destipadress}:{destportnumber}"
         LOG.debug(f"Dest URL is {destipadress}:{destportnumber}")
         async with session.post(url, json={"method": method, "params": params}) as response:
-            data = await response.text()
+            data: str = await response.text()
             LOG.debug(f"Response for forwarded request {method}: {data[:200]}...{data[-200:]}")
             return response
 
-    async def handle_getblock_error(self, session, params, errorResponse):
-        errorResponseText = await errorResponse.text()
-        errorDict = json.loads(errorResponseText)
-        errorCode = errorDict['error']['code']
-        errorMessage = errorDict['error']['message']
-        blockhash = params[0]
+    async def handle_getblock_error(self, session: ClientSession, params: tuple[int, int], errorResponse):
+        errorResponseText: str = await errorResponse.text()
+        errorDict: tuple[str,str] = json.loads(errorResponseText)
+        errorCode: int = int(errorDict['error']['code'])
+        errorMessage: str = errorDict['error']['message']
+        blockhash: int = params[0]
 
         catchErrorCodes = [-5, -1]
         if errorCode not in catchErrorCodes:
@@ -202,9 +201,9 @@ class BTCProxy:
         else:
             LOG.debug(
                 f"Block {blockhash} not found, might have been pruned; select random peer to download from")
-            peerInfoResp = await self.forward_request(session, 'getpeerinfo', [])
-            peerInfoResponseText = await peerInfoResp.text()
-            peerInfoDict = json.loads(peerInfoResponseText)
+            peerInfoResp: web.Response = await self.forward_request(session, 'getpeerinfo', [])
+            peerInfoResponseText: str = await peerInfoResp.text()
+            peerInfoDict: tuple[str,str] = json.loads(peerInfoResponseText)
             if 'result' in peerInfoDict:
                 peerEntries = peerInfoDict["result"]
                 LOG.debug(f"Got {len(peerEntries)} peerIds")
@@ -249,7 +248,7 @@ class BTCProxy:
                         LOG.info(f"🧈 Block {blockhash} has now been downloaded.")
                     return getBlockResponse
 
-    async def taskRequestHandler(self, request):
+    async def taskRequestHandler(self, request) -> web.Response | None:
         requestTask = asyncio.create_task(self._handle(request), name="Task#" + str(self.taskCounter))
         LOG.debug(f"{requestTask.get_name()}: Task created.")
         self.taskCounter += 1
@@ -264,7 +263,7 @@ class BTCProxy:
                 LOG.debug(f"{requestTask.get_name()}: Task is done, execution took " + str(stopTime-startTime) + "ms.")
 
             try:
-                response = requestTask.result()
+                response: web.Response = requestTask.result()
             except asyncio.InvalidStateError:
                 LOG.error(f"{requestTask.get_name()}: Task is in invalid state!")
             except asyncio.CancelledError:
@@ -272,8 +271,8 @@ class BTCProxy:
             else:
                 return response
             
-    async def _handle(self, request):
-            response = await self.handle_request(request)
+    async def _handle(self, request) -> web.Response:
+            response: web.Response = await self.handle_request(request)
             return response
 
     
